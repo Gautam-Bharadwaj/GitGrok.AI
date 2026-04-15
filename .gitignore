@@ -1,38 +1,5 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-.venv/
-venv/
-env/
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-htmlcov/
-.coverage
-
-# Data & indexes (not committed — too large)
-data/
-tmp/
-*.faiss
-*.pkl
-
-# Environment
-.env
-!.env.example
-
-# Node / Next.js
 node_modules/
 .next/
-out/
-frontend/.next/
-frontend/node_modules/
-
-# Docker
-*.log
-
-# macOS
-.DS_Store
+.env*
+*.db
+faiss_index/
