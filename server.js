@@ -1,1 +1,444 @@
-require('dotenv').config();\nconst express  = require('express');\nconst multer   = require('multer');\nconst path     = require('path');\nconst fs       = require('fs');\nconst fse      = require('fs-extra');\nconst { v4: uuidv4 } = require('uuid');\nconst cors     = require('cors');\nconst { GoogleGenerativeAI } = require('@google/generative-ai');\nconst pdfParse = require('pdf-parse');\nconst puppeteer = require('puppeteer');\n\nconst app  = express();\nconst PORT = process.env.PORT || 3000;\n\n// Gemini — lazy factory so key can be swapped at runtime\nlet _apiKey = process.env.GEMINI_API_KEY || '';\nconst getGenAI = () => new GoogleGenerativeAI(_apiKey);\n\n// ─── Middleware ──────────────────────────────────────────────────────────────\napp.use(cors());\napp.use(express.json({ limit: '50mb' }));\napp.use(express.urlencoded({ extended: true, limit: '50mb' }));\napp.use(express.static(path.join(__dirname, 'public')));\n\nfse.ensureDirSync(path.join(__dirname, 'uploads'));\nfse.ensureDirSync(path.join(__dirname, 'generated'));\n\n// ─── Multer — accept up to 10 files ─────────────────────────────────────────\nconst storage = multer.diskStorage({\n  destination: (req, file, cb) => cb(null, 'uploads/'),\n  filename:    (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`)\n});\n\nconst upload = multer({\n  storage,\n  limits: { fileSize: 50 * 1024 * 1024, files: 10 },\n  fileFilter: (req, file, cb) => {\n    const ok  = ['.pdf', '.txt', '.doc', '.docx'];\n    const ext = path.extname(file.originalname).toLowerCase();\n    ok.includes(ext) ? cb(null, true) : cb(new Error('Only PDF, TXT, DOC, DOCX allowed'));\n  }\n});\n\n// ─── Text Extractor ──────────────────────────────────────────────────────────\nasync function extractText(filePath, originalName) {\n  const ext = path.extname(originalName).toLowerCase();\n  if (ext === '.pdf') {\n    const buf  = fs.readFileSync(filePath);\n    const data = await pdfParse(buf);\n    return data.text || '';\n  }\n  return fs.readFileSync(filePath, 'utf-8');\n}\n\n// ─── Master Prompt — UNIVERSAL (any subject, any document) ──────────────────\nfunction buildPrompt({ subject, topics, docText }) {\n  const topicLine = topics\n    ? `FOCUS TOPICS (mandatory — prioritise these above all else): ${topics}`\n    : 'FOCUS: Cover ALL topics found in the document.';\n\n  return `You are an expert teacher, examiner, and paper setter with decades of experience designing board-level examinations across ALL subjects — Mathematics, Physics, Chemistry, Biology, History, Geography, Economics, Law, Literature, Computer Science, and any other field.\n\nSUBJECT: ${subject ? subject : 'Auto-detect from the document content — state it clearly at the top of your output'}\n${topicLine}\n\n════════════════════ DOCUMENT CONTENT ════════════════════\n${docText}\n══════════════════════════════════════════════════════════\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nWHAT YOU MUST DO\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nSTEP 1 — READ EVERYTHING:\n  • Read every line of the provided document carefully.\n  • Extract every concept, fact, definition, formula, theorem, example, and existing question/exercise.\n\nSTEP 2 — EXTRACT ALL EXISTING QUESTIONS VERBATIM:\n  • If the document already contains questions, exercises, or problems — copy ALL of them exactly as written.\n  • Then generate SIMILAR, TWISTED, and ADVANCED variants of each one.\n\nSTEP 3 — GENERATE MAXIMUM NEW QUESTIONS:\n  • From every concept, fact, and idea in the document — generate as many additional questions as possible.\n  • Cover all 4 difficulty levels: Easy · Medium · Hard · Advanced (Toughest).\n  • DO NOT STOP EARLY. Squeeze every possible question from the material.\n  • Text/theory documents → comprehension, reasoning, analytical, comparison, and application questions.\n  • Numerical/formula documents → computation, derivation, proof, and problem-solving questions.\n\nSTEP 4 — COMPLETE ANSWERS FOR EVERY QUESTION:\n  • Write a FULL, DETAILED answer immediately after all questions (in the Solutions section).\n  • Theory/explanation → full structured paragraphs covering all key points.\n  • Numerical/calculation → Given: → Formula: → Step-by-step → Final Answer.\n  • MCQs → correct option + 1–2 line reason WHY.\n  • NEVER skip, truncate, or say "...".\n\n⭐ TAGGING:\n  • Highly important → ⭐ IMPORTANT\n  • Most likely to appear in exam → ⭐⭐ MOST EXPECTED\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOUTPUT FORMAT — follow EXACTLY, no deviation\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n════════════════════════════════════════════════════════\n                    EXAMINATION PAPER\n    Subject: ${subject || '[detected from document]'}\n    Date: ${new Date().toDateString()}\n    Time: 3 Hours         Maximum Marks: As Per Questions\n════════════════════════════════════════════════════════\n\nGeneral Instructions:\n1. All questions are compulsory unless stated otherwise.\n2. Read each question carefully before answering.\n3. Questions marked ⭐⭐ MOST EXPECTED are high-yield for exams.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION A: MULTIPLE CHOICE QUESTIONS (MCQs)    [1 mark each]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nGenerate the MAXIMUM number of MCQs possible (minimum 20, no upper limit).\nEach question MUST have exactly 4 options labelled (A) (B) (C) (D).\n\nQ1. [question text]  [⭐ tag if applicable]\n    (A) ...  (B) ...  (C) ...  (D) ...\n\n[Write ALL MCQs here — do not stop early]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION B: FILL IN THE BLANKS                  [1 mark each]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMinimum 15. Based on key terms, facts, definitions, and formulas.\nQ1. ___________ is defined as ...\n\n[Write ALL fill-in-the-blank questions here]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION C: TRUE / FALSE                        [1 mark each]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMinimum 10. Include tricky, conceptual, and commonly confused statements.\nQ1. [statement]\n\n[Write ALL T/F questions here]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION D: VERY SHORT ANSWER (VSA)             [1 mark each]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMinimum 10. One-line definitions, direct recall, simple one-step computations.\nQ1. [question]\n\n[Write ALL VSA questions here]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION E: SHORT ANSWER (SA)                   [2 marks each]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMinimum 15. Explanation-based or moderate computation questions (3–6 steps/sentences).\nInclude original, similar, and twisted variants.\n\n[Write ALL SA questions here]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION F: LONG ANSWER (LA)                    [5 marks each]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMinimum 8. Detailed analytical, proof, essay, or problem-solving questions.\nInclude verbatim questions from the document + similar + twisted + 1 advanced ⭐⭐ MOST EXPECTED.\n\n[Write ALL LA questions here]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION G: CASE-BASED / APPLICATION QUESTIONS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMinimum 2–3 real-world scenarios. Each with 3–4 sub-questions.\n\n[Write ALL case-based questions here]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n                    ★ END OF QUESTION PAPER ★\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n══════════════════════════════════════════════════════════\n             COMPLETE SOLUTIONS — BOARD STYLE\n══════════════════════════════════════════════════════════\n\nWrite a FULL, DETAILED solution for EVERY question above. Do not skip any question.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION A — SOLUTIONS (MCQs)\n━━━━━━━━━━━━━━━━━━━━━━━━━\nQ1. Answer: (X)\n    Reason: [clear 1–2 line explanation of why this is correct]\nQ2. Answer: (X)\n    Reason: ...\n[Write answers for ALL MCQs — no skipping]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION B — SOLUTIONS (Fill in the Blanks)\n━━━━━━━━━━━━━━━━━━━━━━━━━\nQ1. Answer: [exact word/phrase]\nQ2. Answer: ...\n[Write all answers]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION C — SOLUTIONS (True / False)\n━━━━━━━━━━━━━━━━━━━━━━━━━\nQ1. [True / False] — Reason: [clear explanation]\nQ2. ...\n[Write all answers]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION D — SOLUTIONS (VSA)\n━━━━━━━━━━━━━━━━━━━━━━━━━\nQ1. [Complete answer]\nQ2. ...\n[Write all answers]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION E — SOLUTIONS (Short Answer)\n━━━━━━━━━━━━━━━━━━━━━━━━━\nQ1.\n  Answer: [Full explanation — 3 to 6 sentences/steps covering all key points]\nQ2.\n  Answer: ...\n[Write ALL answers in full]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION F — SOLUTIONS (Long Answer)\n━━━━━━━━━━━━━━━━━━━━━━━━━\nQ1.\n  Given: [if applicable]\n  To Find / To Prove / To Explain: [objective]\n  Solution:\n    Step 1: [detailed]\n    Step 2: [detailed]\n    Step 3: [detailed]\n    Step 4: [detailed]\n    Step 5: [detailed]\n  Final Answer / Conclusion: [clear, complete statement]\nQ2.\n  [same format]\n[Write ALL answers in full]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\nSECTION G — SOLUTIONS (Case-Based)\n━━━━━━━━━━━━━━━━━━━━━━━━━\n[Complete solutions for every sub-part of every case — no skipping]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n              ★ END OF SOLUTIONS ★\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nABSOLUTE RULES — NEVER BREAK:\n1. Work with ANY document type — Maths, Science, History, Law, Biology, Economics, Literature, CS, etc.\n2. NEVER skip a question or its solution.\n3. NEVER write "...", "similar to above", "and so on" — write everything completely.\n4. NEVER generate questions not based on the provided document.\n5. Extract ALL pre-existing questions from the document verbatim first.\n6. ALL solutions must be complete, in board-exam style, and easy to understand.\n7. Generate the MAXIMUM possible number of questions from the material.\n\`;\n}\n\n// ─── Generate HTML for PDF export ───────────────────────────────────────────\nfunction generateHTML(content, subject) {\n  const escaped = content\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n\n  const formatted = escaped\n    .replace(/^(SECTION [A-G]:?.+)$/gm, '<h2 class="section-header">$1</h2>')\n    .replace(/^(━+)$/gm, '<hr class="section-divider"/>')\n    .replace(/^(═+)$/gm, '<hr class="major-divider"/>')\n    .replace(/⭐⭐ MOST EXPECTED/g, '<span class="tag most-expected">⭐⭐ MOST EXPECTED</span>')\n    .replace(/⭐ IMPORTANT/g, '<span class="tag important">⭐ IMPORTANT</span>')\n    .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')\n    .replace(/\\n/g, '<br/>');\n\n  return \`<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>\${subject || 'Examination'} Paper</title>\n<style>\n  * { margin:0; padding:0; box-sizing:border-box; }\n  body { font-family:'Times New Roman',Times,serif; font-size:13px; line-height:1.9; color:#000; background:#fff; padding:30px 40px; }\n  .paper-header { text-align:center; border:3px double #000; padding:16px; margin-bottom:24px; }\n  .paper-header h1 { font-size:18px; font-weight:bold; }\n  .paper-header .sub { font-size:14px; margin:4px 0; }\n  .section-header { background:#111; color:#fff; padding:8px 14px; margin:24px 0 10px; font-size:13px; letter-spacing:1px; }\n  .section-divider { border:1px solid #000; margin:8px 0; }\n  .major-divider { border:2px solid #000; margin:14px 0; }\n  .tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:11px; font-weight:bold; }\n  .important { background:#fff3cd; border:1px solid #ffc107; color:#856404; }\n  .most-expected { background:#d4edda; border:1px solid #28a745; color:#155724; }\n  @media print { body { padding:15mm 20mm; } .section-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }\n</style>\n</head>\n<body>\n  <div class="paper-header">\n    <h1>EXAMINATION PAPER</h1>\n    <div class="sub">Subject: \${subject || 'As detected'} &nbsp;|&nbsp; \${new Date().toDateString()}</div>\n    <div class="sub">Time: 3 Hours &nbsp;&nbsp; Maximum Marks: As Per Questions</div>\n  </div>\n  <div>\${formatted}</div>\n</body>\n</html>\`;\n}\n\n// ─── Routes ──────────────────────────────────────────────────────────────────\n\napp.get('/api/health', (req, res) => res.json({ status: 'ok' }));\n\n// Dynamic API key setter\napp.post('/api/set-key', (req, res) => {\n  const { key } = req.body;\n  if (key && key.trim().length > 10) _apiKey = key.trim();\n  res.json({ ok: true });\n});\n\n// ─── Main Generate ────────────────────────────────────────────────────────────\napp.post('/api/generate', upload.array('documents', 10), async (req, res) => {\n  const uploadedPaths = [];\n  try {\n    const { subject, topics } = req.body;\n    const files = req.files || [];\n\n    if (!files.length) {\n      return res.status(400).json({ error: 'Please upload at least one document.' });\n    }\n\n    // Extract text from every file and combine\n    const allParts = [];\n    for (const f of files) {\n      uploadedPaths.push(f.path);\n      let text = '';\n      try { text = await extractText(f.path, f.originalname); }\n      catch (e) { console.warn(\`Could not parse \${f.originalname}:\`, e.message); }\n      if (text.trim()) {\n        allParts.push(\`[File: \${f.originalname}]\\n\${text.trim()}\`);\n      }\n    }\n\n    if (!allParts.length) {\n      return res.status(400).json({ error: 'Documents appear empty or unreadable. Please use text-based PDFs.' });\n    }\n\n    // Token budget ~30,000 chars total\n    const docText = allParts.join('\\n\\n---\\n\\n').substring(0, 30000);\n\n    // ── SSE setup ──\n    res.setHeader('Content-Type', 'text/event-stream');\n    res.setHeader('Cache-Control', 'no-cache');\n    res.setHeader('Connection', 'keep-alive');\n    res.setHeader('Access-Control-Allow-Origin', '*');\n\n    const send = (type, data) => res.write(\`data: \${JSON.stringify({ type, data })}\\n\\n\`);\n\n    send('status', \`Read \${files.length} file(s). Analyzing content...\`);\n\n    if (!_apiKey) {\n      send('error', 'Gemini API key not set. Please enter your API key in the form.');\n      res.write('data: [DONE]\\n\\n');\n      res.end();\n      return;\n    }\n\n    const model = getGenAI().getGenerativeModel({\n      model: 'gemini-1.5-flash',\n      generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }\n    });\n\n    const prompt = buildPrompt({ subject, topics, docText });\n\n    send('status', 'Generating full exam paper + solutions — this takes 1–3 minutes...');\n\n    const result = await model.generateContentStream(prompt);\n\n    let fullText = '';\n    for await (const chunk of result.stream) {\n      const t = chunk.text();\n      fullText += t;\n      send('chunk', t);\n    }\n\n    const sessionId = uuidv4();\n    fs.writeFileSync(path.join(__dirname, 'generated', \`\${sessionId}.txt\`), fullText, 'utf-8');\n\n    send('complete', { sessionId, message: 'Paper generated successfully!' });\n    res.write('data: [DONE]\\n\\n');\n    res.end();\n\n  } catch (err) {\n    console.error('Generate error:', err);\n    if (!res.headersSent) {\n      res.status(500).json({ error: err.message });\n    } else {\n      res.write(\`data: \${JSON.stringify({ type: 'error', data: err.message })}\\n\\n\`);\n      res.end();\n    }\n  } finally {\n    for (const p of uploadedPaths) {\n      try { if (fs.existsSync(p)) fs.unlinkSync(p); } catch {}\n    }\n  }\n});\n\n// ─── PDF Download ─────────────────────────────────────────────────────────────\napp.post('/api/download-pdf', async (req, res) => {\n  try {\n    const { content, subject } = req.body;\n    if (!content) return res.status(400).json({ error: 'No content provided' });\n\n    const html = generateHTML(content, subject);\n    const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });\n    const page = await browser.newPage();\n    await page.setContent(html, { waitUntil: 'networkidle0' });\n    const pdfBuf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });\n    await browser.close();\n\n    res.setHeader('Content-Type', 'application/pdf');\n    res.setHeader('Content-Disposition', \`attachment; filename="\${subject || 'Exam'}_Paper.pdf"\`);\n    res.send(Buffer.from(pdfBuf));\n  } catch (err) {\n    console.error('PDF error:', err);\n    res.status(500).json({ error: 'PDF generation failed: ' + err.message });\n  }\n});\n\n// ─── TXT Download ─────────────────────────────────────────────────────────────\napp.get('/api/download-txt/:id', (req, res) => {\n  const fp = path.join(__dirname, 'generated', \`\${req.params.id}.txt\`);\n  if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Not found' });\n  res.setHeader('Content-Type', 'text/plain');\n  res.setHeader('Content-Disposition', 'attachment; filename="exam_paper.txt"');\n  res.sendFile(fp);\n});\n\n// ─── Frontend fallback ────────────────────────────────────────────────────────\napp.get('/{*path}', (req, res) => {\n  res.sendFile(path.join(__dirname, 'public', 'index.html'));\n});\n\napp.listen(PORT, () => {\n  console.log(\`\\n🚀 AI Paper Setter → http://localhost:\${PORT}\\n\`);\n});
+require('dotenv').config();
+const express  = require('express');
+const multer   = require('multer');
+const path     = require('path');
+const fs       = require('fs');
+const fse      = require('fs-extra');
+const { v4: uuidv4 } = require('uuid');
+const cors     = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const pdfParse = require('pdf-parse');
+const puppeteer = require('puppeteer');
+
+const app  = express();
+const PORT = process.env.PORT || 3000;
+
+// Gemini — lazy factory so key can be swapped at runtime
+let _apiKey = process.env.GEMINI_API_KEY || '';
+const getGenAI = () => new GoogleGenerativeAI(_apiKey);
+
+// ─── Middleware ──────────────────────────────────────────────────────────────
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+fse.ensureDirSync(path.join(__dirname, 'uploads'));
+fse.ensureDirSync(path.join(__dirname, 'generated'));
+
+// ─── Multer — accept up to 10 files ─────────────────────────────────────────
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename:    (req, file, cb) => cb(null, `${uuidv4()}-${file.originalname}`)
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024, files: 10 },
+  fileFilter: (req, file, cb) => {
+    const ok  = ['.pdf', '.txt', '.doc', '.docx'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    ok.includes(ext) ? cb(null, true) : cb(new Error('Only PDF, TXT, DOC, DOCX allowed'));
+  }
+});
+
+// ─── Text Extractor ──────────────────────────────────────────────────────────
+async function extractText(filePath, originalName) {
+  const ext = path.extname(originalName).toLowerCase();
+  if (ext === '.pdf') {
+    const buf  = fs.readFileSync(filePath);
+    const data = await pdfParse(buf);
+    return data.text || '';
+  }
+  return fs.readFileSync(filePath, 'utf-8');
+}
+
+// ─── Master Prompt — UNIVERSAL (any subject, any document) ──────────────────
+function buildPrompt({ subject, topics, docText }) {
+  const topicLine = topics
+    ? `FOCUS TOPICS (mandatory — prioritise these above all else): ${topics}`
+    : 'FOCUS: Cover ALL topics found in the document.';
+
+  return `You are an expert teacher, examiner, and paper setter with decades of experience designing board-level examinations across ALL subjects — Mathematics, Physics, Chemistry, Biology, History, Geography, Economics, Law, Literature, Computer Science, and any other field.
+
+SUBJECT: ${subject ? subject : 'Auto-detect from the document content — state it clearly at the top of your output'}
+${topicLine}
+
+════════════════════ DOCUMENT CONTENT ════════════════════
+${docText}
+══════════════════════════════════════════════════════════
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT YOU MUST DO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1 — READ EVERYTHING:
+  • Read every line of the provided document carefully.
+  • Extract every concept, fact, definition, formula, theorem, example, and existing question/exercise.
+
+STEP 2 — EXTRACT ALL EXISTING QUESTIONS VERBATIM:
+  • If the document already contains questions, exercises, or problems — copy ALL of them exactly as written.
+  • Then generate SIMILAR, TWISTED, and ADVANCED variants of each one.
+
+STEP 3 — GENERATE MAXIMUM NEW QUESTIONS:
+  • From every concept, fact, and idea in the document — generate as many additional questions as possible.
+  • Cover all 4 difficulty levels: Easy · Medium · Hard · Advanced (Toughest).
+  • DO NOT STOP EARLY. Squeeze every possible question from the material.
+  • Text/theory documents → comprehension, reasoning, analytical, comparison, and application questions.
+  • Numerical/formula documents → computation, derivation, proof, and problem-solving questions.
+
+STEP 4 — COMPLETE ANSWERS FOR EVERY QUESTION:
+  • Write a FULL, DETAILED answer immediately after all questions (in the Solutions section).
+  • Theory/explanation → full structured paragraphs covering all key points.
+  • Numerical/calculation → Given: → Formula: → Step-by-step → Final Answer.
+  • MCQs → correct option + 1–2 line reason WHY.
+  • NEVER skip, truncate, or say "...".
+
+⭐ TAGGING:
+  • Highly important → ⭐ IMPORTANT
+  • Most likely to appear in exam → ⭐⭐ MOST EXPECTED
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT — follow EXACTLY, no deviation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+════════════════════════════════════════════════════════
+                    EXAMINATION PAPER
+    Subject: ${subject || '[detected from document]'}
+    Date: ${new Date().toDateString()}
+    Time: 3 Hours         Maximum Marks: As Per Questions
+════════════════════════════════════════════════════════
+
+General Instructions:
+1. All questions are compulsory unless stated otherwise.
+2. Read each question carefully before answering.
+3. Questions marked ⭐⭐ MOST EXPECTED are high-yield for exams.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION A: MULTIPLE CHOICE QUESTIONS (MCQs)    [1 mark each]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generate the MAXIMUM number of MCQs possible (minimum 20, no upper limit).
+Each question MUST have exactly 4 options labelled (A) (B) (C) (D).
+
+Q1. [question text]  [⭐ tag if applicable]
+    (A) ...  (B) ...  (C) ...  (D) ...
+
+[Write ALL MCQs here — do not stop early]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION B: FILL IN THE BLANKS                  [1 mark each]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Minimum 15. Based on key terms, facts, definitions, and formulas.
+Q1. ___________ is defined as ...
+
+[Write ALL fill-in-the-blank questions here]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION C: TRUE / FALSE                        [1 mark each]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Minimum 10. Include tricky, conceptual, and commonly confused statements.
+Q1. [statement]
+
+[Write ALL T/F questions here]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION D: VERY SHORT ANSWER (VSA)             [1 mark each]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Minimum 10. One-line definitions, direct recall, simple one-step computations.
+Q1. [question]
+
+[Write ALL VSA questions here]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION E: SHORT ANSWER (SA)                   [2 marks each]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Minimum 15. Explanation-based or moderate computation questions (3–6 steps/sentences).
+Include original, similar, and twisted variants.
+
+[Write ALL SA questions here]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION F: LONG ANSWER (LA)                    [5 marks each]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Minimum 8. Detailed analytical, proof, essay, or problem-solving questions.
+Include verbatim questions from the document + similar + twisted + 1 advanced ⭐⭐ MOST EXPECTED.
+
+[Write ALL LA questions here]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION G: CASE-BASED / APPLICATION QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Minimum 2–3 real-world scenarios. Each with 3–4 sub-questions.
+
+[Write ALL case-based questions here]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    ★ END OF QUESTION PAPER ★
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+══════════════════════════════════════════════════════════
+             COMPLETE SOLUTIONS — BOARD STYLE
+══════════════════════════════════════════════════════════
+
+Write a FULL, DETAILED solution for EVERY question above. Do not skip any question.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION A — SOLUTIONS (MCQs)
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1. Answer: (X)
+    Reason: [clear 1–2 line explanation of why this is correct]
+Q2. Answer: (X)
+    Reason: ...
+[Write answers for ALL MCQs — no skipping]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION B — SOLUTIONS (Fill in the Blanks)
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1. Answer: [exact word/phrase]
+Q2. Answer: ...
+[Write all answers]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION C — SOLUTIONS (True / False)
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1. [True / False] — Reason: [clear explanation]
+Q2. ...
+[Write all answers]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION D — SOLUTIONS (VSA)
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1. [Complete answer]
+Q2. ...
+[Write all answers]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION E — SOLUTIONS (Short Answer)
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1.
+  Answer: [Full explanation — 3 to 6 sentences/steps covering all key points]
+Q2.
+  Answer: ...
+[Write ALL answers in full]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION F — SOLUTIONS (Long Answer)
+━━━━━━━━━━━━━━━━━━━━━━━━━
+Q1.
+  Given: [if applicable]
+  To Find / To Prove / To Explain: [objective]
+  Solution:
+    Step 1: [detailed]
+    Step 2: [detailed]
+    Step 3: [detailed]
+    Step 4: [detailed]
+    Step 5: [detailed]
+  Final Answer / Conclusion: [clear, complete statement]
+Q2.
+  [same format]
+[Write ALL answers in full]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION G — SOLUTIONS (Case-Based)
+━━━━━━━━━━━━━━━━━━━━━━━━━
+[Complete solutions for every sub-part of every case — no skipping]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              ★ END OF SOLUTIONS ★
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ABSOLUTE RULES — NEVER BREAK:
+1. Work with ANY document type — Maths, Science, History, Law, Biology, Economics, Literature, CS, etc.
+2. NEVER skip a question or its solution.
+3. NEVER write "...", "similar to above", "and so on" — write everything completely.
+4. NEVER generate questions not based on the provided document.
+5. Extract ALL pre-existing questions from the document verbatim first.
+6. ALL solutions must be complete, in board-exam style, and easy to understand.
+7. Generate the MAXIMUM possible number of questions from the material.
+\`;
+}
+
+// ─── Generate HTML for PDF export ───────────────────────────────────────────
+function generateHTML(content, subject) {
+  const escaped = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  const formatted = escaped
+    .replace(/^(SECTION [A-G]:?.+)$/gm, '<h2 class="section-header">$1</h2>')
+    .replace(/^(━+)$/gm, '<hr class="section-divider"/>')
+    .replace(/^(═+)$/gm, '<hr class="major-divider"/>')
+    .replace(/⭐⭐ MOST EXPECTED/g, '<span class="tag most-expected">⭐⭐ MOST EXPECTED</span>')
+    .replace(/⭐ IMPORTANT/g, '<span class="tag important">⭐ IMPORTANT</span>')
+    .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+    .replace(/\\n/g, '<br/>');
+
+  return \`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>\${subject || 'Examination'} Paper</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Times New Roman',Times,serif; font-size:13px; line-height:1.9; color:#000; background:#fff; padding:30px 40px; }
+  .paper-header { text-align:center; border:3px double #000; padding:16px; margin-bottom:24px; }
+  .paper-header h1 { font-size:18px; font-weight:bold; }
+  .paper-header .sub { font-size:14px; margin:4px 0; }
+  .section-header { background:#111; color:#fff; padding:8px 14px; margin:24px 0 10px; font-size:13px; letter-spacing:1px; }
+  .section-divider { border:1px solid #000; margin:8px 0; }
+  .major-divider { border:2px solid #000; margin:14px 0; }
+  .tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:11px; font-weight:bold; }
+  .important { background:#fff3cd; border:1px solid #ffc107; color:#856404; }
+  .most-expected { background:#d4edda; border:1px solid #28a745; color:#155724; }
+  @media print { body { padding:15mm 20mm; } .section-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+  <div class="paper-header">
+    <h1>EXAMINATION PAPER</h1>
+    <div class="sub">Subject: \${subject || 'As detected'} &nbsp;|&nbsp; \${new Date().toDateString()}</div>
+    <div class="sub">Time: 3 Hours &nbsp;&nbsp; Maximum Marks: As Per Questions</div>
+  </div>
+  <div>\${formatted}</div>
+</body>
+</html>\`;
+}
+
+// ─── Routes ──────────────────────────────────────────────────────────────────
+
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
+// Dynamic API key setter
+app.post('/api/set-key', (req, res) => {
+  const { key } = req.body;
+  if (key && key.trim().length > 10) _apiKey = key.trim();
+  res.json({ ok: true });
+});
+
+// ─── Main Generate ────────────────────────────────────────────────────────────
+app.post('/api/generate', upload.array('documents', 10), async (req, res) => {
+  const uploadedPaths = [];
+  try {
+    const { subject, topics } = req.body;
+    const files = req.files || [];
+
+    if (!files.length) {
+      return res.status(400).json({ error: 'Please upload at least one document.' });
+    }
+
+    // Extract text from every file and combine
+    const allParts = [];
+    for (const f of files) {
+      uploadedPaths.push(f.path);
+      let text = '';
+      try { text = await extractText(f.path, f.originalname); }
+      catch (e) { console.warn(\`Could not parse \${f.originalname}:\`, e.message); }
+      if (text.trim()) {
+        allParts.push(\`[File: \${f.originalname}]\\n\${text.trim()}\`);
+      }
+    }
+
+    if (!allParts.length) {
+      return res.status(400).json({ error: 'Documents appear empty or unreadable. Please use text-based PDFs.' });
+    }
+
+    // Token budget ~30,000 chars total
+    const docText = allParts.join('\\n\\n---\\n\\n').substring(0, 30000);
+
+    // ── SSE setup ──
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const send = (type, data) => res.write(\`data: \${JSON.stringify({ type, data })}\\n\\n\`);
+
+    send('status', \`Read \${files.length} file(s). Analyzing content...\`);
+
+    if (!_apiKey) {
+      send('error', 'Gemini API key not set. Please enter your API key in the form.');
+      res.write('data: [DONE]\\n\\n');
+      res.end();
+      return;
+    }
+
+    const model = getGenAI().getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.7 }
+    });
+
+    const prompt = buildPrompt({ subject, topics, docText });
+
+    send('status', 'Generating full exam paper + solutions — this takes 1–3 minutes...');
+
+    const result = await model.generateContentStream(prompt);
+
+    let fullText = '';
+    for await (const chunk of result.stream) {
+      const t = chunk.text();
+      fullText += t;
+      send('chunk', t);
+    }
+
+    const sessionId = uuidv4();
+    fs.writeFileSync(path.join(__dirname, 'generated', \`\${sessionId}.txt\`), fullText, 'utf-8');
+
+    send('complete', { sessionId, message: 'Paper generated successfully!' });
+    res.write('data: [DONE]\\n\\n');
+    res.end();
+
+  } catch (err) {
+    console.error('Generate error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.write(\`data: \${JSON.stringify({ type: 'error', data: err.message })}\\n\\n\`);
+      res.end();
+    }
+  } finally {
+    for (const p of uploadedPaths) {
+      try { if (fs.existsSync(p)) fs.unlinkSync(p); } catch {}
+    }
+  }
+});
+
+// ─── PDF Download ─────────────────────────────────────────────────────────────
+app.post('/api/download-pdf', async (req, res) => {
+  try {
+    const { content, subject } = req.body;
+    if (!content) return res.status(400).json({ error: 'No content provided' });
+
+    const html = generateHTML(content, subject);
+    const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
+    await browser.close();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', \`attachment; filename="\${subject || 'Exam'}_Paper.pdf"\`);
+    res.send(Buffer.from(pdfBuf));
+  } catch (err) {
+    console.error('PDF error:', err);
+    res.status(500).json({ error: 'PDF generation failed: ' + err.message });
+  }
+});
+
+// ─── TXT Download ─────────────────────────────────────────────────────────────
+app.get('/api/download-txt/:id', (req, res) => {
+  const fp = path.join(__dirname, 'generated', \`\${req.params.id}.txt\`);
+  if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Not found' });
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', 'attachment; filename="exam_paper.txt"');
+  res.sendFile(fp);
+});
+
+// ─── Frontend fallback ────────────────────────────────────────────────────────
+app.get('/{*path}', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(\`\\n🚀 AI Paper Setter → http://localhost:\${PORT}\\n\`);
+});

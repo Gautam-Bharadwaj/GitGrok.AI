@@ -1,1 +1,24 @@
-{\n  "name": "maths-paper-setter",\n  "version": "1.0.0",\n  "main": "server.js",\n  "scripts": {\n    "start": "node server.js",\n    "dev": "node server.js"\n  },\n  "keywords": [],\n  "author": "",\n  "license": "ISC",\n  "description": "",\n  "dependencies": {\n    "@google/generative-ai": "^0.24.1",\n    "cors": "^2.8.6",\n    "dotenv": "^17.4.2",\n    "express": "^5.2.1",\n    "fs-extra": "^11.3.4",\n    "multer": "^2.1.1",\n    "pdf-parse": "^2.4.5",\n    "puppeteer": "^24.41.0",\n    "uuid": "^13.0.0"\n  }\n}
+{
+  "name": "maths-paper-setter",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "fs-extra": "^11.3.4",
+    "multer": "^2.1.1",
+    "pdf-parse": "^2.4.5",
+    "puppeteer": "^24.41.0",
+    "uuid": "^13.0.0"
+  }
+}

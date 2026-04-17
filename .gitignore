@@ -1,1 +1,5 @@
-node_modules/\nuploads/\ngenerated/\n.env\n*.log
+node_modules/
+uploads/
+generated/
+.env
+*.log
