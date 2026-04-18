@@ -1,4 +1,4 @@
-# 🚀 RepoMind AI
+# RepoMind AI
 
 > **Production-grade AI system** that indexes any GitHub repository and answers developer questions with context-aware, cited responses — powered by GPT-4o + FAISS semantic search.
 
@@ -11,7 +11,7 @@
 
 ---
 
-## ✨ Features
+## Features
 
 | Feature | Description |
 |---|---|
@@ -22,7 +22,7 @@
 | **SSE Streaming** | Token-by-token streaming via Server-Sent Events |
 | **Multi-intent Routing** | Auto-detects: explain / bug scan / README gen / file summary / general |
 | **Source Citations** | Every answer includes file path + line range + syntax-highlighted snippet |
-| **Bug Scanner** | Severity-classified findings: 🔴 CRITICAL / 🟡 WARNING / 🔵 INFO |
+| **Bug Scanner** | Severity-classified findings: CRITICAL / WARNING / INFO |
 | **README Generator** | Auto-generates professional README with badges |
 | **3-tier Caching** | Redis (query) + FAISS disk (index) + DB (summaries) |
 | **Async Ingestion** | Celery + Redis background worker with retry logic |
@@ -30,7 +30,7 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 GitHub URL → Repo Cloner → File Filter → Code Chunker
@@ -55,7 +55,7 @@ User Query → Query Embedder → Similarity Search → MMR Re-rank
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 repomind/
@@ -100,7 +100,7 @@ repomind/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -155,7 +155,7 @@ npm run dev
 
 ---
 
-## 🐳 Docker (Production)
+## Docker (Production)
 
 ```bash
 # Copy and configure environment
@@ -189,7 +189,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 cd backend
@@ -206,7 +206,7 @@ pytest tests/test_api.py -v           # API integration tests
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 ### Repository Endpoints
 
@@ -235,7 +235,7 @@ Full interactive docs at **`http://localhost:8000/docs`** (Swagger UI).
 
 ---
 
-## ⚙️ Configuration Reference
+## Configuration Reference
 
 | Variable | Default | Description |
 |---|---|---|
@@ -254,7 +254,7 @@ Full interactive docs at **`http://localhost:8000/docs`** (Swagger UI).
 
 ---
 
-## 🔐 Security Constraints
+## Security Constraints
 
 - API keys are **never** hardcoded — all from environment
 - Repos are **never** sent raw to the LLM — always via RAG retrieval
@@ -265,7 +265,7 @@ Full interactive docs at **`http://localhost:8000/docs`** (Swagger UI).
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [ ] Pinecone integration as alternative vector store
 - [ ] GitHub webhook for auto re-indexing on push
@@ -276,6 +276,6 @@ Full interactive docs at **`http://localhost:8000/docs`** (Swagger UI).
 
 ---
 
-## 📄 Licence
+## Licence
 
 MIT © 2025 — Built with FastAPI, FAISS, OpenAI, and Next.js.
