@@ -4,14 +4,17 @@
  * app/page.tsx — Root page: Application shell with header, sidebar, chat, analysis.
  */
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import RepoLoader from "@/components/RepoLoader";
 import ChatWindow from "@/components/ChatWindow";
 import AnalysisPanel from "@/components/AnalysisPanel";
+import HeroPage from "@/components/HeroPage";
 import { useChatStore } from "@/store/chatStore";
 import { repoApi } from "@/lib/api";
 
 export default function HomePage() {
+  const [hasEntered, setHasEntered] = useState(false);
+
   const repos        = useChatStore((s) => s.repos);
   const activeRepoId = useChatStore((s) => s.activeRepoId);
   const setRepos     = useChatStore((s) => s.setRepos);
@@ -30,6 +33,10 @@ export default function HomePage() {
     removeRepo(id);
     if (activeRepoId === id) setActiveRepo(null);
   };
+
+  if (!hasEntered) {
+    return <HeroPage onEnter={() => setHasEntered(true)} />;
+  }
 
   return (
     <div className="app-shell gradient-bg">
