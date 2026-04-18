@@ -1,5 +1,5 @@
 /**
- * lib/api.ts — Typed API client for the RAG Code Assistant backend.
+ * lib/api.ts — Typed API client for the RepoMind backend.
  *
  * All functions throw on HTTP errors so callers can handle them uniformly.
  */

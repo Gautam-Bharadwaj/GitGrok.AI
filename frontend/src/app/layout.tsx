@@ -9,12 +9,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "RAG Code Assistant — AI-Powered Code Intelligence",
+  title: "RepoMind — AI-Powered Code Intelligence",
   description:
     "Ask any question about your GitHub repository. Powered by GPT-4o + FAISS semantic search.",
   keywords: ["RAG", "code assistant", "AI", "GitHub", "code search", "GPT-4"],
   openGraph: {
-    title: "RAG Code Assistant",
+    title: "RepoMind",
     description: "AI-powered code intelligence for any GitHub repository",
     type: "website",
   },

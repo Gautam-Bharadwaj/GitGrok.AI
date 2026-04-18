@@ -17,7 +17,7 @@ settings = get_settings()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="RAG Code Assistant API server")
+    parser = argparse.ArgumentParser(description="RepoMind API server")
     parser.add_argument("--reload", action="store_true", help="Enable hot-reload (dev only)")
     parser.add_argument("--host", default="0.0.0.0", help="Bind host")
     parser.add_argument("--port", type=int, default=8000, help="Bind port")

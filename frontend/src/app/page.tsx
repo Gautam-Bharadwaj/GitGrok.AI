@@ -43,7 +43,7 @@ export default function HomePage() {
               <polyline points="2 12 12 17 22 12"/>
             </svg>
           </div>
-          <span className="header-title">RAG Code Assistant</span>
+          <span className="header-title">RepoMind</span>
           <span className="badge badge-success" style={{ marginLeft: 8 }}>v1.0</span>
         </div>
 

@@ -1,4 +1,4 @@
-# 🚀 RAG Code Intelligence Assistant
+# 🚀 RepoMind AI
 
 > **Production-grade AI system** that indexes any GitHub repository and answers developer questions with context-aware, cited responses — powered by GPT-4o + FAISS semantic search.
 
@@ -58,7 +58,7 @@ User Query → Query Embedder → Similarity Search → MMR Re-rank
 ## 📁 Project Structure
 
 ```
-rag-code-assistant/
+repomind/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app factory
@@ -113,7 +113,7 @@ rag-code-assistant/
 
 ```bash
 git clone <this-repo>
-cd rag-code-assistant
+cd repomind
 cp .env.example .env
 # Edit .env — fill in OPENAI_API_KEY and SECRET_KEY
 ```

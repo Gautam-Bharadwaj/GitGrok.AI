@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: create DB tables.  Shutdown: no-op (connections auto-closed)."""
-    logger.info("Starting RAG Code Assistant API…")
+    logger.info("Starting RepoMind API…")
     await init_db()
     logger.info("Database initialised.")
     yield
@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
 # ── App factory ───────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="RAG Code Intelligence Assistant",
+    title="RepoMind AI",
     description=(
         "Production-grade RAG system that indexes any GitHub repository "
         "and answers developer questions with cited, context-aware responses."
@@ -112,13 +112,13 @@ app.include_router(analysis.router)
 @app.get("/health", tags=["Health"])
 async def health_check() -> dict:
     """Lightweight health check for Docker / load-balancer probes."""
-    return {"status": "ok", "service": "rag-code-assistant"}
+    return {"status": "ok", "service": "repomind"}
 
 
 @app.get("/", tags=["Root"])
 async def root() -> dict:
     return {
-        "service": "RAG Code Intelligence Assistant",
+        "service": "RepoMind AI",
         "version": "1.0.0",
         "docs": "/docs",
     }
