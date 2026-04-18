@@ -223,14 +223,189 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
         </div>
       </section>
 
-      {/* --- NEW 3 STEPS SECTION HEADER --- */}
-      <section className="hero-steps-section">
-         <div className="feature-badge" style={{margin:'0 auto 20px'}}>
-          <span className="dot"></span> AI-Powered Process
+        {/* --- FLOWCHART GRAPHIC --- */}
+        <div className="process-flowchart">
+          <div className="flow-node head-node">
+            <span className="node-num">01</span>
+            <div className="node-box">
+              <div className="n-icon">☁️</div>
+              <div className="n-text">
+                <h4>Upload Repo</h4>
+                <p>GitHub, GitLab, or Zip file</p>
+              </div>
+            </div>
+            <div className="connector-dot right"></div>
+          </div>
+          
+          <svg className="flow-lines" preserveAspectRatio="none" viewBox="0 0 200 300">
+            {/* Draw bezier curves from left box to middle boxes */}
+            <path d="M0 150 C 100 150, 100 30, 200 30" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            <path d="M0 150 C 100 150, 100 90, 200 90" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            <path d="M0 150 L 200 150" stroke="rgba(245,158,11,0.8)" strokeWidth="1.5" fill="none" />
+            <path d="M0 150 C 100 150, 100 210, 200 210" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            <path d="M0 150 C 100 150, 100 270, 200 270" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+          </svg>
+
+          <div className="flow-middle">
+            <div className="node-box small-node">
+              <div className="connector-dot left"></div><div className="n-icon-small">📄</div><div><h5>Code Context</h5><p>AST parsing</p></div><div className="connector-dot right"></div>
+            </div>
+            <div className="node-box small-node">
+              <div className="connector-dot left"></div><div className="n-icon-small">🔍</div><div><h5>Dep Analysis</h5><p>Map imports</p></div><div className="connector-dot right"></div>
+            </div>
+            <div className="node-box small-node active-node">
+              <div className="connector-dot left"></div><div className="n-icon-small">🧠</div><div><h5>Vector Embed</h5><p>AI semantic map</p></div><div className="connector-dot right"></div>
+            </div>
+            <div className="node-box small-node">
+              <div className="connector-dot left"></div><div className="n-icon-small">⚡️</div><div><h5>Vulnerability</h5><p>Security scan</p></div><div className="connector-dot right"></div>
+            </div>
+            <div className="node-box small-node">
+              <div className="connector-dot left"></div><div className="n-icon-small">📊</div><div><h5>Architecture</h5><p>Diagram gen</p></div><div className="connector-dot right"></div>
+            </div>
+          </div>
+
+          <svg className="flow-lines reverse" preserveAspectRatio="none" viewBox="0 0 200 300">
+            {/* Draw bezier curves from middle boxes to right box */}
+             <path d="M0 30 C 100 30, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            <path d="M0 90 C 100 90, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            <path d="M0 150 L 200 150" stroke="rgba(245,158,11,0.8)" strokeWidth="1.5" fill="none" />
+            <path d="M0 210 C 100 210, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            <path d="M0 270 C 100 270, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+          </svg>
+
+          <div className="flow-node tail-node">
+            <div className="connector-dot left"></div>
+            <div className="node-box">
+              <div className="n-icon" style={{background:'#10b981', color:'#000'}}>✓</div>
+              <div className="n-text">
+                <h4>Code &amp; Succeed</h4>
+                <p>Start chatting flawlessly</p>
+              </div>
+            </div>
+            <span className="node-num num-green">03</span>
+          </div>
         </div>
-        <h2>AI-Powered Code Transformation in 3 Steps</h2>
-        <p>One upload, total codebase dominance—AI refines every part of your architecture.</p>
+
+        {/* --- 3 CARDS UNDER FLOWCHART --- */}
+        <div className="process-cards">
+          <div className="p-card">
+            <div className="pc-icon">⚡️</div>
+            <h4>Instant Analysis</h4>
+            <p>AI processes everything in parallel within seconds</p>
+          </div>
+          <div className="p-card">
+            <div className="pc-icon">🎯</div>
+            <h4>Personalized Results</h4>
+            <p>Tailored recommendations based on your unique stack</p>
+          </div>
+          <div className="p-card">
+            <div className="pc-icon">🚀</div>
+            <h4>Ready to Ship</h4>
+            <p>Get production-ready materials optimized for success</p>
+          </div>
+        </div>
+
+        <div className="process-cta-text">
+          <p>Ready to transform your codebase?</p>
+          <button className="btn-feature-cta" onClick={onEnter}>Get Started Free &rarr;</button>
+        </div>
       </section>
+
+      {/* --- BIG DIAGONAL STRIPE CTA SECTION --- */}
+      <section className="hero-final-cta pattern-bg">
+        <div className="feature-badge" style={{margin:'0 auto 20px', border:'1px solid rgba(0,0,0,0.5)', color:'#fff', background:'rgba(0,0,0,0.2)'}}>
+          <span className="dot" style={{background:'#fff'}}></span> Final Step
+        </div>
+        
+        <h2>Ready to Build Your Engineering<br/><span className="hero-highlight">Smarter?</span></h2>
+        <p>Join millions of professionals using our AI-powered platform to write clean architecture.<br/>Start your AI-enhanced lifecycle today.</p>
+        
+        <div className="hero-cta-group" style={{justifyContent: 'center', marginTop: '30px'}}>
+          <button className="btn-hero-primary" onClick={onEnter}>Start Free with AI &gt;</button>
+          <button className="btn-hero-secondary" onClick={onEnter}>For Enterprise</button>
+        </div>
+        
+        <div className="hero-checks" style={{justifyContent: 'center', marginTop: '20px', marginBottom: '60px'}}>
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> No credit card required</span>
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Instant AI access</span>
+        </div>
+
+        <div className="bottom-metrics">
+          <div className="bm-item">
+            <div className="bm-icon">🧠</div>
+            <div>
+              <strong>AI Powered</strong>
+              <p>Latest AI model</p>
+            </div>
+          </div>
+          <div className="bm-item">
+            <div className="bm-icon">⚡️</div>
+            <div>
+              <strong>Real-time AI</strong>
+              <p>Instant optimization</p>
+            </div>
+          </div>
+          <div className="bm-item">
+            <div className="bm-icon">✨</div>
+            <div>
+              <strong>10M+ Sessions</strong>
+              <p>Proven AI results</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="hero-logos-wrapper" style={{maxWidth: '800px', margin: '0 auto'}}>
+          <p className="logos-title" style={{background:'transparent', color:'#ccc'}}>Trusted by professionals at</p>
+          <div className="hero-logos" style={{opacity: 0.7, gridTemplateColumns: 'repeat(5, 1fr)', display: 'grid', gap: '30px', alignItems: 'center'}}>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>Google</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>Microsoft</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>Meta</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>PayPal</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>Unilever</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>Coca-Cola</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>Intel</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>NETFLIX</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>VISA</span>
+            <span className="logo-placeholder" style={{fontSize:'1.1rem'}}>Walmart</span>
+          </div>
+        </div>
+      </section>
+
+      {/* --- FOOTER --- */}
+      <footer className="hero-footer">
+        <div className="footer-content">
+          <div className="footer-left">
+            <div className="hero-logo" style={{color:'#666', marginBottom: '20px'}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              <span className="hero-logo-text" style={{color:'#ddd'}}>RepoMind</span>
+            </div>
+          </div>
+          
+          <div className="footer-links">
+            <div className="fl-col">
+              <h4>GET STARTED</h4>
+              <span>Repo Integration</span>
+              <span>About Us</span>
+            </div>
+            <div className="fl-col">
+              <h4>SUPPORT</h4>
+              <span>Privacy Policy</span>
+              <span>Terms of Service</span>
+            </div>
+            <div className="fl-col">
+              <h4>IMPORTANT RESOURCES</h4>
+              <span>Blog</span>
+              <span>Code Examples</span>
+              <span>Architecture Templates</span>
+              <span>Technology Codebase</span>
+            </div>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          &copy; 2026 RepoMind, Inc. All rights reserved.
+        </div>
+      </footer>
+
 
       <style jsx>{`
         .hero-container {
@@ -604,12 +779,101 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
         }
         .tool-circle { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #2a2a35; box-shadow: 0 0 0 1px #444; }
 
-        /* STEPS SECTION */
+        /* STEPS SECTION & FLOWCHART */
         .hero-steps-section {
-          text-align: center; max-width: 800px; margin: 0 auto 100px; padding: 0 2rem;
+          text-align: center; max-width: 1000px; margin: 0 auto 60px; padding: 0 2rem;
         }
         .hero-steps-section h2 { font-size: 2.2rem; color: #fff; margin-bottom: 16px; font-weight: 700; }
         .hero-steps-section p { color: #888; }
+
+        .process-flowchart {
+          display: flex; align-items: center; justify-content: center; margin: 60px 0; position: relative;
+        }
+        .flow-lines { width: 120px; height: 320px; opacity: 0.6; }
+        .flow-lines.reverse { transform: scaleX(-1); }
+
+        .node-box {
+          background: #17171e; border: 1px solid #2a2a2a; border-radius: 12px;
+          display: flex; align-items: center; padding: 16px 20px; gap: 16px;
+          min-width: 220px; position: relative; text-align: left;
+        }
+        .node-box.small-node {
+          padding: 10px 16px; min-width: 180px; gap: 12px; margin: 10px 0; background: #131317;
+        }
+        .node-box.active-node {
+          border-color: rgba(255,153,0,0.5); background: rgba(255,153,0,0.05); box-shadow: 0 0 20px rgba(255,153,0,0.1);
+        }
+        .n-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .n-icon-small { width: 24px; height: 24px; font-size: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+        
+        .n-text h4 { font-size: 0.95rem; color: #fff; margin-bottom: 4px; font-weight: 600; }
+        .n-text p { font-size: 0.75rem; color: #888; margin: 0; line-height: 1.3; }
+        
+        .small-node h5 { font-size: 0.8rem; color: #e5e5e5; margin-bottom: 2px; }
+        .small-node p { font-size: 0.65rem; color: #666; margin: 0; }
+
+        .connector-dot { position: absolute; width: 8px; height: 8px; background: #ff9900; border-radius: 50%; box-shadow: 0 0 10px #ff9900; }
+        .connector-dot.right { right: -4px; top: 50%; transform: translateY(-50%); }
+        .connector-dot.left { left: -4px; top: 50%; transform: translateY(-50%); }
+
+        .flow-node { position: relative; }
+        .node-num {
+          position: absolute; top: -12px; left: -12px; width: 24px; height: 24px;
+          background: #000; border: 1.5px solid #ff9900; color: #ff9900; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; z-index: 2;
+        }
+        .node-num.num-green { border-color: #10b981; color: #10b981; left: auto; right: -12px; }
+
+        .flow-middle { display: flex; flex-direction: column; justify-content: center; }
+
+        .process-cards {
+          display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 60px;
+        }
+        .p-card {
+          background: #131317; border: 1px solid #222; border-radius: 16px; padding: 30px; text-align: left;
+        }
+        .pc-icon {
+          width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; font-size: 1.2rem;
+          display: flex; align-items: center; justify-content: center; margin-bottom: 20px; border: 1px solid #333;
+        }
+        .p-card h4 { font-size: 1.1rem; color: #fff; margin-bottom: 12px; font-weight: 600; }
+        .p-card p { font-size: 0.85rem; color: #888; line-height: 1.5; }
+
+        .process-cta-text { margin-top: 20px; font-size: 0.95rem; color: #aaa; text-align: center; }
+        .process-cta-text p { margin-bottom: 16px; }
+
+        /* PATTERN CTA SECTION */
+        .hero-final-cta {
+          padding: 100px 2rem; text-align: center; position: relative; overflow: hidden;
+          background: #111;
+          background-image: repeating-linear-gradient(45deg, rgba(255,153,0,0.03) 0, rgba(255,153,0,0.03) 2px, transparent 2px, transparent 12px);
+          border-top: 1px solid #222;
+        }
+        .hero-final-cta h2 { font-size: 3rem; color: #fff; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 24px; }
+        .hero-final-cta p { font-size: 1.1rem; color: #aaa; line-height: 1.6; max-width: 600px; margin: 0 auto; }
+        
+        .bottom-metrics {
+          display: flex; justify-content: center; gap: 40px; border: 1px solid #333; background: #15151a;
+          padding: 30px; border-radius: 16px; max-width: 800px; margin: 0 auto 60px; text-align: left;
+        }
+        .bm-item { display: flex; align-items: center; gap: 16px; }
+        .bm-icon { width: 40px; height: 40px; background: rgba(255,153,0,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,153,0,0.2); }
+        .bm-item strong { display: block; color: #fff; font-size: 0.95rem; margin-bottom: 4px; }
+        .bm-item p { color: #888; font-size: 0.75rem; margin: 0; }
+
+        /* FOOTER */
+        .hero-footer {
+          background: #0a0a0a; border-top: 1px solid #222; padding: 60px 2rem 30px;
+        }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 60px; margin-bottom: 30px; }
+        .footer-left { max-width: 300px; }
+        .footer-links { display: flex; gap: 80px; }
+        .fl-col h4 { font-size: 0.75rem; font-weight: 700; color: #eee; margin-bottom: 24px; letter-spacing: 0.05em; }
+        .fl-col span { display: block; font-size: 0.85rem; color: #888; margin-bottom: 16px; cursor: pointer; transition: color 0.2s; }
+        .fl-col span:hover { color: #fff; }
+        
+        .footer-bottom { text-align: center; font-size: 0.75rem; color: #666; }
+
       `}</style>
     </div>
   );
