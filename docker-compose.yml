@@ -1,0 +1,137 @@
+version: "3.9"
+
+# ── Shared environment snippet ─────────────────────────────────────────────────
+x-backend-env: &backend-env
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+  OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+  EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+  MAX_CONTEXT_TOKENS: ${MAX_CONTEXT_TOKENS:-6000}
+  TOP_K_RETRIEVAL: ${TOP_K_RETRIEVAL:-8}
+  GITHUB_ACCESS_TOKEN: ${GITHUB_ACCESS_TOKEN:-}
+  TEMP_CLONE_DIR: /app/tmp/repos
+  MAX_REPO_SIZE_MB: ${MAX_REPO_SIZE_MB:-500}
+  DATABASE_URL: sqlite+aiosqlite:///./data/app.db
+  REDIS_URL: redis://redis:6379/0
+  FAISS_INDEX_DIR: /app/data/faiss
+  SECRET_KEY: ${SECRET_KEY}
+  CORS_ORIGINS: http://localhost:3000
+  DEBUG: "false"
+  LOG_LEVEL: INFO
+
+services:
+  # ── Redis ─────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend ────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *backend-env
+    volumes:
+      - faiss_data:/app/data/faiss
+      - db_data:/app/data
+      - clone_tmp:/app/tmp/repos
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+  # ── Celery Worker ─────────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: >
+      celery -A app.workers.ingestion_worker.celery_app worker
+      --loglevel=info --concurrency=2 --queues=celery
+    environment:
+      <<: *backend-env
+    volumes:
+      - faiss_data:/app/data/faiss
+      - db_data:/app/data
+      - clone_tmp:/app/tmp/repos
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+  # ── Celery Flower (monitoring) ─────────────────────────────────────────────────
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: celery -A app.workers.ingestion_worker.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      <<: *backend-env
+    depends_on:
+      - redis
+
+  # ── Next.js Frontend ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  # ── Nginx (prod reverse proxy) ────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  redis_data:
+  faiss_data:
+  db_data:
+  clone_tmp:

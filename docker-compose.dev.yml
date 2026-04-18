@@ -1,0 +1,43 @@
+version: "3.9"
+
+# ── Development override — hot reload for backend & frontend ───────────────────
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  backend:
+    build:
+      target: builder          # Use builder stage (includes dev deps)
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+      --reload --reload-dir /app/app
+    volumes:
+      - ./backend:/app         # Mount source for hot reload
+      - faiss_data:/app/data/faiss
+      - db_data:/app/data
+      - clone_tmp:/app/tmp/repos
+    environment:
+      DEBUG: "true"
+      LOG_LEVEL: DEBUG
+
+  worker:
+    volumes:
+      - ./backend:/app
+    command: >
+      celery -A app.workers.ingestion_worker.celery_app worker
+      --loglevel=debug --concurrency=1 --queues=celery
+      --autoreload
+
+  frontend:
+    build:
+      target: builder
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules        # Keep node_modules in container
+      - /app/.next               # Preserve Next.js cache
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+
+  # Disable nginx in dev — use Next.js rewrites instead
+  nginx:
+    profiles: ["prod"]           # Only starts with --profile prod
