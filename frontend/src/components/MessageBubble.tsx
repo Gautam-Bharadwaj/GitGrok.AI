@@ -136,7 +136,7 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
       </div>
 
       <style jsx>{`
-        .msg { display: flex; gap: 16px; align-items: flex-start; padding: 16px 0; margin: 0; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .msg { display: flex; gap: 16px; align-items: flex-start; padding: 16px 0; margin: 0; width: 100%; border-bottom: 1px solid rgba(0,0,0,0.04); }
         .msg--user { flex-direction: row; }
         .msg__bubble--user {
           flex: 1; padding: 0 4px; font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);
@@ -146,7 +146,7 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
         .msg__avatar {
           width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: #ffffff; color: #000000; box-shadow: 0 0 10px rgba(255,255,255,0.1);
+          background: #f1f5f9; color: var(--accent-1); border: 1px solid rgba(0,0,0,0.05);
         }
         .msg__body { flex: 1; min-width: 0; }
         .msg__content {
@@ -160,8 +160,8 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
         .msg__content :global(li) { margin-bottom: 0.25em; }
         .msg__content :global(.inline-code) {
           font-family: var(--font-mono); font-size: 0.85em;
-          background: var(--bg-surface); color: var(--text-primary);
-          padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(0,0,0,0.05); color: var(--text-primary);
+          padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08);
         }
         .cursor {
           display: inline-block; width: 2px; height: 1em;
@@ -177,15 +177,15 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
         .followup-btn {
           font-size: 0.8rem; padding: 6px 12px;
           background: transparent;
-          border: 1px solid rgba(255,255,255,0.1);
+          border: 1px solid rgba(0,0,0,0.1);
           border-radius: 12px; color: var(--text-secondary);
           cursor: pointer; transition: all var(--transition-fast);
           white-space: nowrap;
         }
         .followup-btn:hover {
-          background: var(--bg-surface);
-          color: var(--text-primary);
-          border-color: rgba(255,255,255,0.2);
+          background: var(--bg-glass-hover);
+          color: var(--accent-1);
+          border-color: rgba(0,78,233,0.3);
         }
       `}</style>
     </div>

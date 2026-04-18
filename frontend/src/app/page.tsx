@@ -130,45 +130,48 @@ export default function HomePage() {
       <style jsx>{`
         .sidebar-header {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 1rem 1.25rem;
+          padding: 1.25rem 1.5rem;
+          background: #ffffff;
+          border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         .sidebar-brand {
-          display: flex; align-items: center; gap: 8px;
-          color: var(--text-primary);
+          display: flex; align-items: center; gap: 10px;
+          color: var(--accent-1);
         }
-        .sidebar-title { font-weight: 600; font-size: 0.95rem; }
+        .sidebar-title { font-weight: 700; font-size: 1.1rem; color: var(--text-primary); }
         
         .sidebar-content { flex: 1; display: flex; flex-direction: column; overflow-y: hidden; }
-        .sidebar-repos { padding: 1.5rem 0.75rem 1rem; flex: 1; overflow-y: auto; }
-        .sidebar-repos__label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.75rem; padding: 0 8px; }
-        .sidebar-repos__empty { font-size: 0.8rem; color: var(--text-muted); padding: 0 8px; }
+        .sidebar-repos { padding: 1.5rem 1rem 1rem; flex: 1; overflow-y: auto; }
+        .sidebar-repos__label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.75rem; padding: 0 8px; letter-spacing: 0.05em; }
+        .sidebar-repos__empty { font-size: 0.85rem; color: var(--text-muted); padding: 0 8px; }
 
         .repo-item {
-          display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-          border-radius: var(--radius-sm); cursor: pointer;
-          transition: all var(--transition-fast); margin-bottom: 2px;
+          display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+          border-radius: var(--radius-md); cursor: pointer;
+          transition: all var(--transition-fast); margin-bottom: 4px;
+          border: 1px solid transparent;
         }
-        .repo-item:hover { background: var(--bg-glass-hover); }
-        .repo-item--active { background: var(--bg-elevated); }
+        .repo-item:hover { background: var(--bg-glass-hover); border-color: rgba(0,0,0,0.05); }
+        .repo-item--active { background: #f0fdf4; border-color: rgba(16,185,129,0.2); }
         .repo-item__icon {
-          width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-          color: var(--text-muted);
+          width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+          color: var(--text-muted); padding: 4px; border-radius: 6px; background: #f1f5f9;
         }
-        .repo-item--active .repo-item__icon { color: var(--text-primary); }
+        .repo-item--active .repo-item__icon { color: #10b981; background: #dcfce7; }
         .repo-item__info { flex: 1; min-width: 0; }
-        .repo-item__name { font-size: 0.85rem; color: var(--text-secondary); }
-        .repo-item--active .repo-item__name { color: var(--text-primary); font-weight: 500; }
+        .repo-item__name { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
+        .repo-item--active .repo-item__name { color: #065f46; font-weight: 600; }
         
         .repo-item__delete { opacity: 0; color: var(--text-muted); padding: 4px; }
         .repo-item:hover .repo-item__delete { opacity: 1; }
         .repo-item__delete:hover { color: var(--error) !important; background: rgba(239, 68, 68, 0.1); }
         
         .sidebar-footer {
-          padding: 0.75rem; border-top: 1px solid rgba(255,255,255,0.04);
+          padding: 1rem; border-top: 1px solid rgba(0,0,0,0.05); background: #ffffff;
         }
 
         .analysis-sidebar {
-          width: 380px; border-left: 1px solid rgba(255,255,255,0.06);
+          width: 380px; border-left: 1px solid rgba(0,0,0,0.08);
           overflow: hidden; display: flex; flex-direction: column;
           background: var(--bg-surface);
         }

@@ -198,38 +198,38 @@ export default function ChatWindow() {
       </div>
 
       <style jsx>{`
-        .chat-window { display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; }
+        .chat-window { display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; background: var(--bg-base); }
         .chat-header {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 1rem 1.5rem;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
-          background: transparent; z-index: 10;
+          padding: 1.25rem 1.5rem;
+          border-bottom: 1px solid rgba(0,0,0,0.05);
+          background: #ffffff; z-index: 10;
         }
-        .chat-header__info { display: flex; align-items: center; gap: 10px; }
+        .chat-header__info { display: flex; align-items: center; gap: 12px; }
         .chat-header__icon {
-          width: 32px; height: 32px; border-radius: 8px;
+          width: 36px; height: 36px; border-radius: 8px;
           display: flex; align-items: center; justify-content: center;
-          background: var(--bg-surface); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.08);
+          background: #f1f5f9; color: var(--accent-1); border: 1px solid rgba(0,0,0,0.05);
         }
-        .chat-header__name { font-weight: 600; font-size: 0.95rem; }
-        .chat-header__meta { font-size: 0.75rem; color: var(--text-muted); }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; padding-bottom: 120px; }
+        .chat-header__name { font-weight: 700; font-size: 1rem; color: var(--text-primary); }
+        .chat-header__meta { font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
+        .chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; padding-bottom: 140px; }
         .chat-messages > * { width: 100%; max-width: 800px; }
         
-        .chat-starter { text-align: center; padding: 4rem 0; color: var(--text-secondary); font-size: 1rem; }
+        .chat-starter { text-align: center; padding: 4rem 0; color: var(--text-secondary); font-size: 1.05rem; }
         .chat-starter__chips { display: flex; flex-direction: row; gap: 10px; justify-content: center; max-width: 600px; margin: 2rem auto 0; flex-wrap: wrap; }
         .followup-btn {
-          font-size: 0.85rem; padding: 8px 16px;
-          background: var(--bg-surface);
-          border: 1px solid rgba(255,255,255,0.08);
+          font-size: 0.85rem; padding: 10px 18px;
+          background: #ffffff; font-weight: 500;
+          border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.02);
           border-radius: 12px; color: var(--text-secondary);
           cursor: pointer; transition: all var(--transition-fast); text-align: left;
         }
-        .followup-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        .followup-btn:hover { background: #f8fafc; color: var(--accent-1); border-color: rgba(0,78,233,0.3); }
         
         .chat-input-bar {
           position: absolute; bottom: 0; left: 0; right: 0;
-          padding: 1rem;
+          padding: 1.5rem 1rem 1rem;
           background: linear-gradient(to top, var(--bg-base) 60%, transparent);
           display: flex; flex-direction: column; align-items: center;
           pointer-events: none;
@@ -237,17 +237,20 @@ export default function ChatWindow() {
         .chat-input-wrap { 
           display: flex; gap: 8px; align-items: flex-end; 
           width: 100%; max-width: 800px; 
-          background: var(--bg-surface);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: #ffffff;
+          border: 1px solid rgba(0,0,0,0.08);
           border-radius: 20px;
-          padding: 6px 6px 6px 16px;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+          padding: 8px 8px 8px 20px;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.08);
           pointer-events: auto;
+          transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
         }
+        .chat-input-wrap:focus-within { border-color: var(--accent-3); box-shadow: 0 8px 30px var(--accent-glow); }
         .chat-textarea {
           resize: none; min-height: 24px; max-height: 200px;
           overflow-y: auto; line-height: 1.5; padding-top: 8px; padding-bottom: 8px;
           background: transparent; border: none; box-shadow: none; font-size: 0.95rem;
+          color: var(--text-primary);
         }
         .chat-textarea:focus { box-shadow: none; }
         .chat-hint { 
