@@ -136,55 +136,56 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
       </div>
 
       <style jsx>{`
-        .msg { display: flex; gap: 12px; margin: 12px 0; align-items: flex-start; }
+        .msg { display: flex; gap: 16px; align-items: flex-start; padding: 16px 0; margin: 0; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .msg--user { flex-direction: row; }
+        .msg__bubble--user {
+          flex: 1; padding: 0 4px; font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);
+        }
+        
         .msg--assistant { flex-direction: row; }
         .msg__avatar {
-          width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+          width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-          color: #fff; box-shadow: 0 0 12px var(--accent-glow);
+          background: #ffffff; color: #000000; box-shadow: 0 0 10px rgba(255,255,255,0.1);
         }
         .msg__body { flex: 1; min-width: 0; }
         .msg__content {
-          background: var(--bg-glass);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 4px 18px 18px 18px;
-          padding: 12px 16px;
-          font-size: 0.875rem; line-height: 1.7;
+          padding: 0 4px;
+          font-size: 0.95rem; line-height: 1.6;
           color: var(--text-primary);
         }
-        .msg__content :global(p) { margin-bottom: 0.5em; }
+        .msg__content :global(p) { margin-bottom: 1em; }
         .msg__content :global(p:last-child) { margin-bottom: 0; }
-        .msg__content :global(ul), .msg__content :global(ol) { padding-left: 1.2rem; margin-bottom: 0.5em; }
+        .msg__content :global(ul), .msg__content :global(ol) { padding-left: 1.2rem; margin-bottom: 1em; }
         .msg__content :global(li) { margin-bottom: 0.25em; }
         .msg__content :global(.inline-code) {
-          font-family: var(--font-mono); font-size: 0.82em;
-          background: rgba(124,58,237,0.15); color: var(--accent-3);
-          padding: 1px 5px; border-radius: 4px;
+          font-family: var(--font-mono); font-size: 0.85em;
+          background: var(--bg-surface); color: var(--text-primary);
+          padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08);
         }
         .cursor {
           display: inline-block; width: 2px; height: 1em;
-          background: var(--accent-2); margin-left: 2px;
+          background: var(--text-primary); margin-left: 2px;
           animation: blink 0.8s step-end infinite; vertical-align: text-bottom;
         }
         @keyframes blink { 50% { opacity: 0; } }
         .msg__tokens {
-          display: block; font-size: 0.68rem; color: var(--text-muted);
-          margin-top: 6px; text-align: right;
+          display: block; font-size: 0.7rem; color: var(--text-muted);
+          margin-top: 10px;
         }
-        .msg__followups { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .msg__followups { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
         .followup-btn {
-          font-size: 0.75rem; padding: 5px 10px;
-          background: rgba(124,58,237,0.1);
-          border: 1px solid rgba(124,58,237,0.25);
-          border-radius: 99px; color: var(--accent-3);
+          font-size: 0.8rem; padding: 6px 12px;
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px; color: var(--text-secondary);
           cursor: pointer; transition: all var(--transition-fast);
           white-space: nowrap;
         }
         .followup-btn:hover {
-          background: rgba(124,58,237,0.2);
-          border-color: rgba(124,58,237,0.4);
-          transform: translateY(-1px);
+          background: var(--bg-surface);
+          color: var(--text-primary);
+          border-color: rgba(255,255,255,0.2);
         }
       `}</style>
     </div>
