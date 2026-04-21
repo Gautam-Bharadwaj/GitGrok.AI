@@ -131,7 +131,7 @@ export default function AnalysisPanel() {
             onClick={handleRunBugs}
             disabled={bugsLoading}
           >
-            {bugsLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Scanning…</> : "🔍 Scan for Bugs"}
+            {bugsLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Scanning…</> : "Scan for Bugs"}
           </button>
 
           {bugs.length === 0 && !bugsLoading && (
@@ -142,14 +142,14 @@ export default function AnalysisPanel() {
             <div key={i} className="bug-card glass">
               <div className="bug-card__header">
                 <span className={`badge ${SEV_CLASS[bug.severity] ?? "badge-info"}`}>
-                  {bug.severity === "CRITICAL" ? "🔴" : bug.severity === "WARNING" ? "🟡" : "🔵"} {bug.severity}
+                  {bug.severity}
                 </span>
                 <span className="bug-card__file truncate">
                   {bug.file}:{bug.line_range}
                 </span>
               </div>
               <p className="bug-card__desc">{bug.description}</p>
-              <p className="bug-card__suggestion">💡 {bug.suggestion}</p>
+              <p className="bug-card__suggestion"><strong>Suggestion:</strong> {bug.suggestion}</p>
             </div>
           ))}
         </div>
@@ -166,7 +166,7 @@ export default function AnalysisPanel() {
               onClick={handleGenReadme}
               disabled={readmeLoading}
             >
-              {readmeLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Generating…</> : "📄 Generate README"}
+              {readmeLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Generating…</> : "Generate README"}
             </button>
             {readme && (
               <>

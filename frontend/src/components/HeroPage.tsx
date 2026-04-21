@@ -1,8 +1,93 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function HeroPage({ onEnter }: { onEnter: () => void }) {
+  const [activeTab, setActiveTab] = useState('Code Generation');
+
+  const features = {
+    'Architecture Graph': {
+      title: 'Architecture Graph',
+      subtitle: 'Visualize your entire codebase structure instantly',
+      badge: 'Graph generated in 1.2s',
+      pills: ['Interactive nodes', 'Import mapping', 'Circular dependencies', 'Module health'],
+      cta: 'View Graph Demo >',
+      mockupCode: `// Architecture Map
+[AuthModule] -> [Database]
+[UserStore] -> [APIClient]
+[APIClient] -> [AuthModule]
+// Warning: Circular dependency detected
+// between UserStore and APIClient`,
+      fileName: 'architecture_map.json'
+    },
+    'Code Review': {
+      title: 'Code Review',
+      subtitle: 'Get PR comments and style suggestions automatically',
+      badge: '250k Pull Requests scanned',
+      pills: ['Strict style rules', 'Performance linting', 'Security checks', 'Design patterns'],
+      cta: 'Start AI Review >',
+      mockupCode: `// AI Suggestion:
+// Line 42: Consider using UseMemo 
+// to prevent unnecessary 
+// re-renders in this complex
+// component.
+const data = useMemo(() => {
+  return compute(props.id);
+}, [props.id]);`,
+      fileName: 'review_summary.md'
+    },
+    'Bug Fixing': {
+      title: 'Bug Fixing',
+      subtitle: 'Autonomously find and fix critical logical errors',
+      badge: '2M+ Bugs squashed',
+      pills: ['Race conditions', 'Memory leaks', 'Null pointers', 'Logical flaws'],
+      cta: 'Fix My Bugs >',
+      mockupCode: `// Bug Found: Potential race condition
+// in async data fetching.
+// AI Fix Applied:
+async function fetchData() {
+  const controller = new AbortController();
+  // ... fix implementation
+  return response.json();
+}`,
+      fileName: 'bug_report.ts'
+    },
+    'Code Generation': {
+      title: 'Code Generation',
+      subtitle: 'Write production-ready, highly optimized code in seconds',
+      badge: '5M+ Lines Written',
+      pills: ['Context-aware logic', 'Best practices builtin', 'One-click insertion', 'Style alignment'],
+      cta: 'Try Generation Free >',
+      mockupCode: `import { jwt } from 'jsonwebtoken';
+
+export const verifyToken = (token: string) => {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET!);
+  } catch (e) {
+    return null;
+  }
+};`,
+      fileName: 'src/utils/auth.ts'
+    },
+    'Test Writer': {
+      title: 'Test Writer',
+      subtitle: 'Generate comprehensive unit and integration tests',
+      badge: '100% Coverage goals',
+      pills: ['Jest / Vitest support', 'Edge case detection', 'Mocking automation', 'Snapshot testing'],
+      cta: 'Write Tests Now >',
+      mockupCode: `describe('Auth Service', () => {
+  it('should verify valid tokens', () => {
+    const token = signToken({ id: 1 });
+    const result = verifyToken(token);
+    expect(result.id).toBe(1);
+  });
+});`,
+      fileName: 'tests/auth.test.ts'
+    }
+  };
+
+  const currentFeature = features[activeTab as keyof typeof features];
+
   return (
     <div className="hero-container">
       {/* Navbar overlay */}
@@ -14,7 +99,7 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
               <polyline points="2 17 12 22 22 17"/>
               <polyline points="2 12 12 17 22 12"/>
             </svg>
-            <span className="hero-logo-text">RepoMind</span>
+            <span className="hero-logo-text">GitGrock.AI</span>
           </div>
           <div className="hero-links">
             <span>Products <span className="arrow">▼</span></span>
@@ -60,7 +145,7 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
 
         <div className="hero-graphic">
           <div className="try-label">
-            Try it live ✨
+            Try it live
             <svg className="try-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
           </div>
           
@@ -80,21 +165,21 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
             
             <div className="mockup-body">
               <div className="mockup-msg">
-                <span className="mockup-avatar">👨‍💻</span>
-                <p>Hi 👋 I'm here to accelerate your coding. What would you like to explore?</p>
+                <span className="mockup-avatar">AI</span>
+                <p>I'm here to accelerate your coding. What would you like to explore?</p>
               </div>
               
               <div className="mockup-chips">
-                <div className="m-chip">🔍 Explain the Architecture</div>
-                <div className="m-chip">📄 Generate documentation</div>
-                <div className="m-chip">🚀 Find memory leaks</div>
-                <div className="m-chip">💻 Write unit tests</div>
-                <div className="m-chip">🛠 Refactor this module</div>
+                <div className="m-chip">Explain the Architecture</div>
+                <div className="m-chip">Generate documentation</div>
+                <div className="m-chip">Find memory leaks</div>
+                <div className="m-chip">Write unit tests</div>
+                <div className="m-chip">Refactor this module</div>
               </div>
             </div>
             
             <div className="mockup-footer">
-              ✨ Powered by RepoMind AI  •  Response time ~200ms
+              Powered by GitGrock.AI  •  Response time ~200ms
             </div>
           </div>
         </div>
@@ -147,27 +232,32 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
         <p className="features-subtitle">Five powerful tools, one terminal. Get production-ready code faster with AI.</p>
         
         <div className="feature-tabs">
-          <button className="f-tab hover-tab">Architecture Graph</button>
-          <button className="f-tab hover-tab">Code Review</button>
-          <button className="f-tab hover-tab">Bug Fixing</button>
-          <button className="f-tab active-tab">Code Generation</button>
-          <button className="f-tab hover-tab">Test Writer</button>
+          {Object.keys(features).map((tab) => (
+            <button 
+              key={tab}
+              className={`f-tab ${activeTab === tab ? 'active-tab' : 'hover-tab'}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         <div className="feature-content-grid">
           <div className="fc-left">
-            <div className="fc-mini-badge">✨ 5M+ Lines Written</div>
-            <h3>Code Generation</h3>
-            <p>Write production-ready, highly optimized code in seconds</p>
+            <div className="fc-mini-badge">{currentFeature.badge}</div>
+            <h3>{currentFeature.title}</h3>
+            <p>{currentFeature.subtitle}</p>
             
             <div className="fc-grid">
-              <div className="fc-pill"><span className="fc-check">✓</span> Context-aware logic</div>
-              <div className="fc-pill"><span className="fc-check">✓</span> Best practices builtin</div>
-              <div className="fc-pill"><span className="fc-check">✓</span> One-click insertion</div>
-              <div className="fc-pill"><span className="fc-check">✓</span> Style alignment</div>
+              {currentFeature.pills.map((pill) => (
+                <div key={pill} className="fc-pill">
+                  <span className="fc-check">✓</span> {pill}
+                </div>
+              ))}
             </div>
 
-            <button className="btn-feature-cta" onClick={onEnter}>Try Generation Free &gt;</button>
+            <button className="btn-feature-cta" onClick={onEnter}>{currentFeature.cta}</button>
           </div>
           
           <div className="fc-right">
@@ -176,32 +266,15 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
               <div className="mockup-main-panel">
                 <div className="panel-header">
                   <div className="mac-dots"><span></span><span></span><span></span></div>
-                  <code>src/utils/auth.ts</code>
+                  <code>{currentFeature.fileName}</code>
                 </div>
                 <div className="panel-body">
-                  <div className="code-line"><span>1</span> <span style={{color:'#c678dd'}}>import</span> <span>{'{'}</span> jwt <span>{'}'}</span> <span style={{color:'#c678dd'}}>from</span> <span style={{color:'#98c379'}}>'jsonwebtoken'</span>;</div>
-                  <div className="code-line"><span>2</span> </div>
-                  <div className="code-line highlight-line">
-                    <span>3</span> <span style={{color:'#c678dd'}}>export const</span> <span style={{color:'#61afef'}}>verifyToken</span> = <span>(</span>token: <span style={{color:'#e5c07b'}}>string</span><span>) =&gt; {'{'}</span>
-                  </div>
-                  <div className="code-line highlight-line">
-                    <span>4</span> &nbsp;&nbsp;<span style={{color:'#c678dd'}}>try</span> <span>{'{'}</span>
-                  </div>
-                  <div className="code-line highlight-line">
-                    <span>5</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style={{color:'#c678dd'}}>return</span> jwt.<span style={{color:'#61afef'}}>verify</span><span>(</span>token, process.env.<span style={{color:'#e06c75'}}>JWT_SECRET</span>!<span>)</span>;
-                  </div>
-                  <div className="code-line highlight-line">
-                    <span>6</span> &nbsp;&nbsp;<span>{'}'}</span> <span style={{color:'#c678dd'}}>catch</span> <span>(</span>e<span>) {'{'}</span>
-                  </div>
-                  <div className="code-line highlight-line">
-                    <span>7</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style={{color:'#c678dd'}}>return</span> <span style={{color:'#d19a66'}}>null</span>;
-                  </div>
-                  <div className="code-line highlight-line">
-                    <span>8</span> &nbsp;&nbsp;<span>{'}'}</span>
-                  </div>
-                  <div className="code-line highlight-line">
-                    <span>9</span> <span>{'}'}</span>;
-                  </div>
+                  {currentFeature.mockupCode.split('\n').map((line, idx) => (
+                    <div key={idx} className={`code-line ${idx > 1 ? 'highlight-line' : ''}`}>
+                      <span>{idx + 1}</span>
+                      <pre style={{ margin: 0, font: 'inherit', color: 'inherit' }}>{line}</pre>
+                    </div>
+                  ))}
                 </div>
                 {/* Floating widgets */}
                 <div className="floating-widget fw-top">
@@ -223,54 +296,78 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
         </div>
       </section>
 
+      {/* --- NEW 3 STEPS SECTION HEADER --- */}
+      <section className="hero-steps-section">
+         <div className="feature-badge" style={{margin:'0 auto 20px'}}>
+          <span className="dot"></span> AI-Powered Process
+        </div>
+        <h2>AI-Powered Code Transformation in 3 Steps</h2>
+        <p>One upload, total codebase dominance—AI refines every part of your architecture.</p>
+
         {/* --- FLOWCHART GRAPHIC --- */}
         <div className="process-flowchart">
           <div className="flow-node head-node">
             <span className="node-num">01</span>
             <div className="node-box">
-              <div className="n-icon">☁️</div>
+              <div className="n-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
               <div className="n-text">
                 <h4>Upload Repo</h4>
-                <p>GitHub, GitLab, or Zip file</p>
+                <p>GitHub or Zip file</p>
               </div>
             </div>
             <div className="connector-dot right"></div>
           </div>
           
           <svg className="flow-lines" preserveAspectRatio="none" viewBox="0 0 200 300">
-            {/* Draw bezier curves from left box to middle boxes */}
-            <path d="M0 150 C 100 150, 100 30, 200 30" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
-            <path d="M0 150 C 100 150, 100 90, 200 90" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
-            <path d="M0 150 L 200 150" stroke="rgba(245,158,11,0.8)" strokeWidth="1.5" fill="none" />
-            <path d="M0 150 C 100 150, 100 210, 200 210" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
-            <path d="M0 150 C 100 150, 100 270, 200 270" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            {/* Base Paths (Static) */}
+            <path d="M0 150 C 100 150, 100 30, 200 30" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+            <path d="M0 150 C 100 150, 100 90, 200 90" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+            <path d="M0 150 L 200 150" stroke="rgba(245,158,11,0.2)" strokeWidth="1" fill="none" />
+            <path d="M0 150 C 100 150, 100 210, 200 210" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+            <path d="M0 150 C 100 150, 100 270, 200 270" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+
+            {/* Animated Paths (Overlay) */}
+            <path className="animated-path p1" d="M0 150 C 100 150, 100 30, 200 30" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p2" d="M0 150 C 100 150, 100 90, 200 90" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p3" d="M0 150 L 200 150" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p4" d="M0 150 C 100 150, 100 210, 200 210" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p5" d="M0 150 C 100 150, 100 270, 200 270" stroke="#ff9900" strokeWidth="2" fill="none" />
           </svg>
 
           <div className="flow-middle">
             <div className="node-box small-node">
-              <div className="connector-dot left"></div><div className="n-icon-small">📄</div><div><h5>Code Context</h5><p>AST parsing</p></div><div className="connector-dot right"></div>
+              <div className="connector-dot left"></div><div className="n-icon-small"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><h5>Code Context</h5><p>AST parsing</p></div><div className="connector-dot right"></div>
             </div>
             <div className="node-box small-node">
-              <div className="connector-dot left"></div><div className="n-icon-small">🔍</div><div><h5>Dep Analysis</h5><p>Map imports</p></div><div className="connector-dot right"></div>
+              <div className="connector-dot left"></div><div className="n-icon-small"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div><h5>Dep Analysis</h5><p>Map imports</p></div><div className="connector-dot right"></div>
             </div>
             <div className="node-box small-node active-node">
-              <div className="connector-dot left"></div><div className="n-icon-small">🧠</div><div><h5>Vector Embed</h5><p>AI semantic map</p></div><div className="connector-dot right"></div>
+              <div className="connector-dot left"></div><div className="n-icon-small"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div><h5>Vector Embed</h5><p>AI semantic map</p></div><div className="connector-dot right"></div>
             </div>
             <div className="node-box small-node">
-              <div className="connector-dot left"></div><div className="n-icon-small">⚡️</div><div><h5>Vulnerability</h5><p>Security scan</p></div><div className="connector-dot right"></div>
+              <div className="connector-dot left"></div><div className="n-icon-small"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><h5>Vulnerability</h5><p>Security scan</p></div><div className="connector-dot right"></div>
             </div>
             <div className="node-box small-node">
-              <div className="connector-dot left"></div><div className="n-icon-small">📊</div><div><h5>Architecture</h5><p>Diagram gen</p></div><div className="connector-dot right"></div>
+              <div className="connector-dot left"></div><div className="n-icon-small"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><div><h5>Architecture</h5><p>Diagram gen</p></div><div className="connector-dot right"></div>
             </div>
           </div>
 
           <svg className="flow-lines reverse" preserveAspectRatio="none" viewBox="0 0 200 300">
-            {/* Draw bezier curves from middle boxes to right box */}
-             <path d="M0 30 C 100 30, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
-            <path d="M0 90 C 100 90, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
-            <path d="M0 150 L 200 150" stroke="rgba(245,158,11,0.8)" strokeWidth="1.5" fill="none" />
-            <path d="M0 210 C 100 210, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
-            <path d="M0 270 C 100 270, 100 150, 200 150" stroke="rgba(245,158,11,0.5)" strokeWidth="1.5" fill="none" />
+            {/* Base Paths (Static) */}
+            <path d="M0 30 C 100 30, 100 150, 200 150" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+            <path d="M0 90 C 100 90, 100 150, 200 150" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+            <path d="M0 150 L 200 150" stroke="rgba(245,158,11,0.2)" strokeWidth="1" fill="none" />
+            <path d="M0 210 C 100 210, 100 150, 200 150" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+            <path d="M0 270 C 100 270, 100 150, 200 150" stroke="rgba(245,158,11,0.15)" strokeWidth="1" fill="none" />
+
+            {/* Animated Paths (Overlay) */}
+            <path className="animated-path p1" d="M0 30 C 100 30, 100 150, 200 150" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p2" d="M0 90 C 100 90, 100 150, 200 150" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p3" d="M0 150 L 200 150" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p4" d="M0 210 C 100 210, 100 150, 200 150" stroke="#ff9900" strokeWidth="2" fill="none" />
+            <path className="animated-path p5" d="M0 270 C 100 270, 100 150, 200 150" stroke="#ff9900" strokeWidth="2" fill="none" />
           </svg>
 
           <div className="flow-node tail-node">
@@ -289,17 +386,23 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
         {/* --- 3 CARDS UNDER FLOWCHART --- */}
         <div className="process-cards">
           <div className="p-card">
-            <div className="pc-icon">⚡️</div>
+            <div className="pc-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
             <h4>Instant Analysis</h4>
             <p>AI processes everything in parallel within seconds</p>
           </div>
           <div className="p-card">
-            <div className="pc-icon">🎯</div>
+            <div className="pc-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
             <h4>Personalized Results</h4>
             <p>Tailored recommendations based on your unique stack</p>
           </div>
           <div className="p-card">
-            <div className="pc-icon">🚀</div>
+            <div className="pc-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </div>
             <h4>Ready to Ship</h4>
             <p>Get production-ready materials optimized for success</p>
           </div>
@@ -377,7 +480,7 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
           <div className="footer-left">
             <div className="hero-logo" style={{color:'#666', marginBottom: '20px'}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-              <span className="hero-logo-text" style={{color:'#ddd'}}>RepoMind</span>
+              <span className="hero-logo-text" style={{color:'#ddd'}}>GitGrock.AI</span>
             </div>
           </div>
           
@@ -402,7 +505,7 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
           </div>
         </div>
         <div className="footer-bottom">
-          &copy; 2026 RepoMind, Inc. All rights reserved.
+          &copy; 2026 GitGrock.AI, Inc. All rights reserved.
         </div>
       </footer>
 
@@ -596,7 +699,36 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
           display: flex; align-items: center; gap: 6px;
           font-size: 0.8rem; color: #888;
         }
-        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
+        .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+          70% { transform: scale(1.1); opacity: 0.8; box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+          100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        @keyframes glow {
+          0% { box-shadow: 0 0 5px rgba(255, 153, 0, 0.2); border-color: rgba(255, 153, 0, 0.3); }
+          50% { box-shadow: 0 0 20px rgba(255, 153, 0, 0.5); border-color: rgba(255, 153, 0, 0.6); }
+          100% { box-shadow: 0 0 5px rgba(255, 153, 0, 0.2); border-color: rgba(255, 153, 0, 0.3); }
+        }
+
+        @keyframes flowData {
+           0% { stroke-dashoffset: 400; opacity: 0; }
+           10% { opacity: 1; }
+           90% { opacity: 1; }
+           100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+
+        .animated-path {
+          stroke-dasharray: 10, 390;
+          animation: flowData 3s linear infinite;
+        }
+        .p1 { animation-delay: 0s; }
+        .p2 { animation-delay: 0.5s; }
+        .p3 { animation-delay: 1s; }
+        .p4 { animation-delay: 1.5s; }
+        .p5 { animation-delay: 2s; }
 
         .mockup-body {
           padding: 24px 20px;
@@ -790,7 +922,7 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
           display: flex; align-items: center; justify-content: center; margin: 60px 0; position: relative;
         }
         .flow-lines { width: 120px; height: 320px; opacity: 0.6; }
-        .flow-lines.reverse { transform: scaleX(-1); }
+        .flow-lines.reverse { opacity: 0.6; }
 
         .node-box {
           background: #17171e; border: 1px solid #2a2a2a; border-radius: 12px;
@@ -801,7 +933,8 @@ export default function HeroPage({ onEnter }: { onEnter: () => void }) {
           padding: 10px 16px; min-width: 180px; gap: 12px; margin: 10px 0; background: #131317;
         }
         .node-box.active-node {
-          border-color: rgba(255,153,0,0.5); background: rgba(255,153,0,0.05); box-shadow: 0 0 20px rgba(255,153,0,0.1);
+          border-color: rgba(255,153,0,0.5); background: rgba(255,153,0,0.05); 
+          animation: glow 3s ease-in-out infinite;
         }
         .n-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
         .n-icon-small { width: 24px; height: 24px; font-size: 0.8rem; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; }

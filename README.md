@@ -1,4 +1,4 @@
-# RepoMind AI
+# GitGrock.AI
 
 > **Production-grade AI system** that indexes any GitHub repository and answers developer questions with context-aware, cited responses — powered by GPT-4o + FAISS semantic search.
 
@@ -58,7 +58,7 @@ User Query → Query Embedder → Similarity Search → MMR Re-rank
 ## Project Structure
 
 ```
-repomind/
+gitgrock/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app factory
@@ -113,7 +113,7 @@ repomind/
 
 ```bash
 git clone <this-repo>
-cd repomind
+cd gitgrock
 cp .env.example .env
 # Edit .env — fill in OPENAI_API_KEY and SECRET_KEY
 ```
