@@ -11,6 +11,8 @@ pydantic-settings==2.3.0
 sqlalchemy==2.0.30
 aiosqlite==0.20.0
 asyncpg==0.29.0          # PostgreSQL async driver (prod)
+psycopg2-binary==2.9.9
+psycopg[binary]==3.1.19
 
 # ── AI / LLM / Embeddings ──────────────────────────────────────────────────────
 openai==1.35.3
