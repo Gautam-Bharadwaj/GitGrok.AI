@@ -8,16 +8,12 @@ from typing import Optional, Any
 
 import numpy as np
 import faiss
-import faiss
 
 from app.config import get_settings
 from app.services.embedding_service import load_index, embed_query
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
-
-
-    query_vec = await embed_query(query)
 
 
 def _mmr(
