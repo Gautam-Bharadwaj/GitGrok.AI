@@ -106,7 +106,7 @@ async def _run_ingestion_task(
 
 # ── Celery task ────────────────────────────────────────────────────────────────
 
-@celery_app.task(bind=True, name="app.workers.ingestion_worker.process_repository")
-def process_repository(self, repo_id: str, url: str, access_token: str) -> None:
+@celery_app.task(bind=True, name="app.workers.ingestion_worker.ingest_repository")
+def ingest_repository(self, repo_id: str, url: str, access_token: str) -> None:
     """Wrapper to run the async pipeline in a sync Celery worker."""
     asyncio.run(_run_ingestion_task(repo_id, url, access_token, task_self=self))
