@@ -60,7 +60,7 @@ export default function ChatWindow() {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
-          <h2>GitGrock.AI</h2>
+          <h2>RepoMind</h2>
           <p>Load a GitHub repository from the sidebar, then ask any question about the code.</p>
           <div className="chat-empty__examples">
             {PLACEHOLDER_QUESTIONS.map((q) => (

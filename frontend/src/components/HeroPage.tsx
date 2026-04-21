@@ -99,7 +99,7 @@ export const verifyToken = (token: string) => {
               <polyline points="2 17 12 22 22 17"/>
               <polyline points="2 12 12 17 22 12"/>
             </svg>
-            <span className="hero-logo-text">GitGrock.AI</span>
+            <span className="hero-logo-text">RepoMind</span>
           </div>
           <div className="hero-links">
             <span>Products <span className="arrow">▼</span></span>
@@ -179,7 +179,7 @@ export const verifyToken = (token: string) => {
             </div>
             
             <div className="mockup-footer">
-              Powered by GitGrock.AI  •  Response time ~200ms
+              Powered by RepoMind  •  Response time ~200ms
             </div>
           </div>
         </div>
@@ -435,21 +435,21 @@ export const verifyToken = (token: string) => {
 
         <div className="bottom-metrics">
           <div className="bm-item">
-            <div className="bm-icon">🧠</div>
+            <div className="bm-icon"></div>
             <div>
               <strong>AI Powered</strong>
               <p>Latest AI model</p>
             </div>
           </div>
           <div className="bm-item">
-            <div className="bm-icon">⚡️</div>
+            <div className="bm-icon"></div>
             <div>
               <strong>Real-time AI</strong>
               <p>Instant optimization</p>
             </div>
           </div>
           <div className="bm-item">
-            <div className="bm-icon">✨</div>
+            <div className="bm-icon"></div>
             <div>
               <strong>10M+ Sessions</strong>
               <p>Proven AI results</p>
