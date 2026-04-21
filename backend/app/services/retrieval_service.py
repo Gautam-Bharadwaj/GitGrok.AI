@@ -8,29 +8,16 @@ from typing import Optional, Any
 
 import numpy as np
 import faiss
-from openai import AsyncOpenAI
+import faiss
 
 from app.config import get_settings
-from app.services.embedding_service import load_index
+from app.services.embedding_service import load_index, embed_query
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-def _get_client() -> AsyncOpenAI:
-    return AsyncOpenAI(api_key=settings.openai_api_key)
-
-
-async def _embed_query(query: str) -> np.ndarray:
-    """Embed a single query string and return a normalised float32 vector."""
-    client = _get_client()
-    response = await client.embeddings.create(
-        model=settings.embedding_model,
-        input=[query],
-    )
-    vec = np.array(response.data[0].embedding, dtype=np.float32).reshape(1, -1)
-    faiss.normalize_L2(vec)
-    return vec
+    query_vec = await embed_query(query)
 
 
 def _mmr(
@@ -116,7 +103,7 @@ async def retrieve(
         logger.warning("Empty FAISS index for repo %s", repo_id)
         return []
 
-    query_vec = await _embed_query(query)
+    query_vec = await embed_query(query)
 
     # Fetch more candidates than needed for MMR
     n_candidates = min(index.ntotal, top_k * 3)

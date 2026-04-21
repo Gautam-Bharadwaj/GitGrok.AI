@@ -22,9 +22,18 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── LLM ──────────────────────────────────────────────────────────────────
-    openai_api_key: str = Field(..., description="OpenAI API key")
+    # ── LLM Providers ────────────────────────────────────────────────────────
+    llm_provider: str = Field("openai", description="LLM provider: openai | groq | ollama")
+    
+    openai_api_key: str = Field(..., description="OpenAI API key (required for RAM-efficient embeddings)")
     openai_model: str = Field("gpt-4o-mini", description="OpenAI chat model")
+    
+    groq_api_key: str = Field("", description="Groq API key")
+    groq_model: str = Field("llama-3.3-70b-versatile", description="Groq chat model")
+
+    ollama_base_url: str = Field("http://localhost:11434", description="Ollama API URL")
+    ollama_model: str = Field("llama3", description="Ollama local model")
+
     embedding_model: str = Field(
         "text-embedding-3-small", description="OpenAI embedding model"
     )

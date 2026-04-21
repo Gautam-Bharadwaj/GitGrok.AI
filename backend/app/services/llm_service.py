@@ -25,7 +25,28 @@ settings = get_settings()
 
 
 def _get_client() -> AsyncOpenAI:
+    provider = settings.llm_provider.lower()
+    if provider == "groq":
+        return AsyncOpenAI(
+            api_key=settings.groq_api_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
+    if provider == "ollama":
+        return AsyncOpenAI(
+            api_key="ollama",  # Not used by local Ollama
+            base_url=f"{settings.ollama_base_url}/v1"
+        )
+    # Default to OpenAI
     return AsyncOpenAI(api_key=settings.openai_api_key)
+
+
+def _get_model() -> str:
+    provider = settings.llm_provider.lower()
+    if provider == "groq":
+        return settings.groq_model
+    if provider == "ollama":
+        return settings.ollama_model
+    return settings.openai_model
 
 
 # ── Intent detection ───────────────────────────────────────────────────────────
@@ -120,9 +141,10 @@ async def stream_answer(
         Raw text tokens as they arrive from the API.
     """
     client = _get_client()
+    model = _get_model()
     try:
         async with client.chat.completions.stream(
-            model=settings.openai_model,
+            model=model,
             messages=messages,  # type: ignore[arg-type]
             temperature=0.2,
             max_tokens=2048,
@@ -143,8 +165,9 @@ async def get_answer(
     Non-streaming LLM call.  Returns (full_text, tokens_used).
     """
     client = _get_client()
+    model = _get_model()
     response = await client.chat.completions.create(
-        model=settings.openai_model,
+        model=model,
         messages=messages,  # type: ignore[arg-type]
         temperature=0.2,
         max_tokens=2048,

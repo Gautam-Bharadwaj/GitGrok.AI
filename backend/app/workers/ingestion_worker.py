@@ -1,128 +1,95 @@
 """
-workers/ingestion_worker.py — Celery task for asynchronous repository ingestion.
-
-Pipeline:
-  1. Clone repository (shallow)
-  2. Filter + discover source files
-  3. Chunk each file (AST / sliding window / semantic)
-  4. Batch-embed via OpenAI
-  5. Build and persist FAISS index
-  6. Update DB status + emit progress via Redis pub/sub
-
-The worker is completely decoupled from the web process and can be
-horizontally scaled.
+workers/ingestion_worker.py — Celery task for background repository ingestion.
 """
 
 import asyncio
+import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from celery import Celery
 from sqlalchemy import update
 
-from app.config import get_settings
 from app.database import AsyncSessionLocal
 from app.models.repo import Repository, RepoStatus
 from app.services.chunking_service import chunk_file
 from app.services.embedding_service import embed_and_index
-from app.services.github_service import cleanup_clone, clone_repository, get_clone_dir
-from app.utils.file_filter import collect_source_files
+from app.services.github_service import clone_repo, list_source_files, cleanup_clone
 
 logger = logging.getLogger(__name__)
-settings = get_settings()
 
-# ── Celery app ─────────────────────────────────────────────────────────────────
-celery_app = Celery(
-    "rag_worker",
-    broker=settings.redis_url,
-    backend=settings.redis_url,
-)
-celery_app.conf.update(
-    task_serializer="json",
-    result_serializer="json",
-    accept_content=["json"],
-    task_track_started=True,
-    worker_prefetch_multiplier=1,
-    task_acks_late=True,
-)
+# Celery App init (shared with main.py)
+celery_app = Celery("ingestion_tasks")
+celery_app.config_from_object("app.config.get_settings", namespace="CELERY")
 
 
-# ── Async DB helpers (run inside asyncio.run()) ────────────────────────────────
-
-async def _update_status(
-    repo_id: str, status: RepoStatus, progress: int = 0, **kwargs: Any
-) -> None:
-    """Update repository row in the DB."""
+async def _update_status(repo_id: str, status: RepoStatus, **kwargs) -> None:
+    """Helper to update database Repository record."""
     async with AsyncSessionLocal() as session:
-        values: dict[str, Any] = {
-            "status": status,
-            "progress_percent": progress,
-            **kwargs,
-        }
-        await session.execute(
-            update(Repository).where(Repository.id == repo_id).values(**values)
-        )
+        stmt = update(Repository).where(Repository.repo_id == repo_id).values(status=status, **kwargs)
+        await session.execute(stmt)
         await session.commit()
 
 
-async def _run_ingestion(
+async def _run_ingestion_task(
     repo_id: str,
     url: str,
     access_token: str,
-    task_self: Any,
+    task_self: Optional[Any] = None,
 ) -> None:
     """
-    Full async ingestion pipeline.  Called from the Celery sync task wrapper.
+    Full async ingestion pipeline.
     """
-    await _update_status(repo_id, RepoStatus.PROCESSING, progress=5)
+    logger.info("[%s] Starting ingestion for: %s", repo_id, url)
+    await _update_status(repo_id, RepoStatus.CLONING, progress=10)
 
     # ── 1. Clone ───────────────────────────────────────────────────────────────
-    logger.info("[%s] Starting clone: %s", repo_id, url)
-    clone_info: dict[str, Any] = {}
+    try:
+        clone_dir = clone_repo(url, repo_id, access_token)
+    except Exception as e:
+        logger.error("[%s] Clone failed: %s", repo_id, e)
+        await _update_status(repo_id, RepoStatus.FAILED, error_message=str(e))
+        return
 
-    async for event in clone_repository(repo_id, url, access_token):
-        if event["event"] == "clone_complete":
-            clone_info = event["data"]
-
-    if not clone_info:
-        raise RuntimeError("Clone produced no output — possible network failure.")
-
-    await _update_status(repo_id, RepoStatus.PROCESSING, progress=20)
-
-    # ── 2. Discover files ──────────────────────────────────────────────────────
-    clone_dir = get_clone_dir(repo_id)
-    source_files = collect_source_files(clone_dir)
+    # ── 2. Filter files ────────────────────────────────────────────────────────
+    source_files = list_source_files(clone_dir)
     file_count = len(source_files)
-    logger.info("[%s] Found %d source files", repo_id, file_count)
-    await _update_status(
-        repo_id, RepoStatus.PROCESSING, progress=30, file_count=file_count
-    )
+    await _update_status(repo_id, RepoStatus.PROCESSING, progress=30)
 
-    # ── 3. Chunk all files ─────────────────────────────────────────────────────
+    if file_count == 0:
+        logger.warning("[%s] No source files found.", repo_id)
+        await _update_status(repo_id, RepoStatus.FAILED, error_message="No readable source files found.")
+        return
+
+    # ── 3. Chunk all files (Parallel) ─────────────────────────────────────────
+    logger.info("[%s] Chunking %d files...", repo_id, file_count)
+    
+    chunk_tasks = [
+        asyncio.to_thread(chunk_file, fp, repo_id, clone_dir) 
+        for fp in source_files
+    ]
+    results = await asyncio.gather(*chunk_tasks)
+    
     all_chunks = []
-    for fp in source_files:
-        chunks = chunk_file(fp, repo_id, clone_dir)
+    for chunks in results:
         all_chunks.extend(chunks)
 
     chunk_count = len(all_chunks)
-    logger.info("[%s] Generated %d chunks from %d files", repo_id, chunk_count, file_count)
-    await _update_status(
-        repo_id, RepoStatus.PROCESSING, progress=55, chunk_count=chunk_count
-    )
-
-    if chunk_count == 0:
-        raise RuntimeError("No chunks generated — repository may contain only binary files.")
+    await _update_status(repo_id, RepoStatus.PROCESSING, progress=60)
 
     # ── 4 & 5. Embed + FAISS index ─────────────────────────────────────────────
     async def progress_cb(pct: int, msg: str) -> None:
         await _update_status(repo_id, RepoStatus.PROCESSING, progress=pct)
-        task_self.update_state(state="PROGRESS", meta={"progress": pct, "message": msg})
+        if task_self:
+            task_self.update_state(state="PROGRESS", meta={"progress": pct, "message": msg})
 
     await embed_and_index(all_chunks, repo_id, progress_callback=progress_cb)
 
-    # ── 6. Mark INDEXED ───────────────────────────────────────────────────────
+    # Store relative paths for the file explorer
+    relative_files = [str(Path(f).relative_to(clone_dir)) for f in source_files]
+    
     await _update_status(
         repo_id,
         RepoStatus.INDEXED,
@@ -130,51 +97,16 @@ async def _run_ingestion(
         indexed_at=datetime.now(timezone.utc),
         file_count=file_count,
         chunk_count=chunk_count,
+        files=json.dumps(relative_files),
     )
     logger.info("[%s] Ingestion complete: %d files, %d chunks", repo_id, file_count, chunk_count)
 
-    # ── Cleanup temp clone ─────────────────────────────────────────────────────
-    cleanup_clone(repo_id)
+    # cleanup_clone(repo_id) # DISABLED: Keep files for File Explorer & Architecture Graph
 
 
 # ── Celery task ────────────────────────────────────────────────────────────────
 
-@celery_app.task(bind=True, max_retries=3, default_retry_delay=30)
-def ingest_repository(
-    self,
-    repo_id: str,
-    url: str,
-    access_token: str = "",
-) -> dict[str, Any]:
-    """
-    Celery task that wraps the async ingestion pipeline.
-
-    Args:
-        repo_id:      UUID of the Repository row.
-        url:          GitHub repository URL.
-        access_token: Optional GitHub PAT for private repos.
-
-    Returns:
-        {"repo_id": repo_id, "status": "INDEXED"}
-
-    Raises:
-        Retries up to 3 times on transient failures.
-    """
-    try:
-        asyncio.run(_run_ingestion(repo_id, url, access_token, self))
-        return {"repo_id": repo_id, "status": "INDEXED"}
-    except Exception as exc:
-        logger.error("[%s] Ingestion failed: %s", repo_id, exc, exc_info=True)
-
-        # Persist failure in DB
-        asyncio.run(
-            _update_status(
-                repo_id,
-                RepoStatus.FAILED,
-                progress=0,
-                error_message=str(exc)[:2048],
-            )
-        )
-
-        # Retry with exponential back-off
-        raise self.retry(exc=exc, countdown=30 * (2 ** self.request.retries))
+@celery_app.task(bind=True, name="app.workers.ingestion_worker.process_repository")
+def process_repository(self, repo_id: str, url: str, access_token: str) -> None:
+    """Wrapper to run the async pipeline in a sync Celery worker."""
+    asyncio.run(_run_ingestion_task(repo_id, url, access_token, task_self=self))
