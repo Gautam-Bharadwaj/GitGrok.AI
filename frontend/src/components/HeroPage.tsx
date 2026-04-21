@@ -474,40 +474,7 @@ export const verifyToken = (token: string) => {
         </div>
       </section>
 
-      {/* --- FOOTER --- */}
-      <footer className="hero-footer">
-        <div className="footer-content">
-          <div className="footer-left">
-            <div className="hero-logo" style={{color:'#666', marginBottom: '20px'}}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-              <span className="hero-logo-text" style={{color:'#ddd'}}>GitGrock.AI</span>
-            </div>
-          </div>
-          
-          <div className="footer-links">
-            <div className="fl-col">
-              <h4>GET STARTED</h4>
-              <span>Repo Integration</span>
-              <span>About Us</span>
-            </div>
-            <div className="fl-col">
-              <h4>SUPPORT</h4>
-              <span>Privacy Policy</span>
-              <span>Terms of Service</span>
-            </div>
-            <div className="fl-col">
-              <h4>IMPORTANT RESOURCES</h4>
-              <span>Blog</span>
-              <span>Code Examples</span>
-              <span>Architecture Templates</span>
-              <span>Technology Codebase</span>
-            </div>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          &copy; 2026 GitGrock.AI, Inc. All rights reserved.
-        </div>
-      </footer>
+
 
 
       <style jsx>{`
@@ -994,18 +961,7 @@ export const verifyToken = (token: string) => {
         .bm-item strong { display: block; color: #fff; font-size: 0.95rem; margin-bottom: 4px; }
         .bm-item p { color: #888; font-size: 0.75rem; margin: 0; }
 
-        /* FOOTER */
-        .hero-footer {
-          background: #0a0a0a; border-top: 1px solid #222; padding: 60px 2rem 30px;
-        }
-        .footer-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 60px; margin-bottom: 30px; }
-        .footer-left { max-width: 300px; }
-        .footer-links { display: flex; gap: 80px; }
-        .fl-col h4 { font-size: 0.75rem; font-weight: 700; color: #eee; margin-bottom: 24px; letter-spacing: 0.05em; }
-        .fl-col span { display: block; font-size: 0.85rem; color: #888; margin-bottom: 16px; cursor: pointer; transition: color 0.2s; }
-        .fl-col span:hover { color: #fff; }
-        
-        .footer-bottom { text-align: center; font-size: 0.75rem; color: #666; }
+
 
       `}</style>
     </div>
