@@ -255,8 +255,8 @@ export default function HomePage() {
           transition: all var(--transition-fast);
         }
         .repo-pill:hover {
-          border-color: rgba(139,92,246,0.3);
-          background: rgba(139,92,246,0.08);
+          border-color: rgba(249, 115, 22, 0.3);
+          background: rgba(249, 115, 22, 0.08);
           color: var(--text-primary);
         }
         .repo-pill--active {

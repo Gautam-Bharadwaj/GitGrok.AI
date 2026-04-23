@@ -22,13 +22,13 @@
   --bg-glass:       rgba(17, 17, 20, 0.75);
   --bg-glass-hover: rgba(30, 30, 38, 0.9);
 
-  /* Brand — Electric violet + cyan */
-  --accent-1:       #8b5cf6;
-  --accent-2:       #a78bfa;
-  --accent-3:       #7c3aed;
-  --accent-cyan:    #22d3ee;
-  --accent-glow:    rgba(139, 92, 246, 0.25);
-  --accent-glow-lg: rgba(139, 92, 246, 0.12);
+  /* Brand — Dynamic Orange */
+  --accent-1:       #f97316;
+  --accent-2:       #fb923c;
+  --accent-3:       #ea580c;
+  --accent-cyan:    #fdba74;
+  --accent-glow:    rgba(249, 115, 22, 0.25);
+  --accent-glow-lg: rgba(249, 115, 22, 0.12);
 
   /* Text */
   --text-primary:   #fafafa;
@@ -79,11 +79,11 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
+::-webkit-scrollbar-thumb { background: rgba(249, 115, 22, 0.2); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(249, 115, 22, 0.4); }
 
 ::selection {
-  background: rgba(139, 92, 246, 0.35);
+  background: rgba(249, 115, 22, 0.35);
   color: #fff;
 }
 
@@ -98,14 +98,14 @@ code, pre { font-family: var(--font-mono); }
   background: rgba(17, 17, 20, 0.6);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.04);
   border-radius: var(--radius-md);
 }
 
 .glass:hover {
   background: rgba(24, 24, 27, 0.7);
-  border-color: rgba(139, 92, 246, 0.2);
+  border-color: rgba(249, 115, 22, 0.2);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
@@ -133,7 +133,7 @@ code, pre { font-family: var(--font-mono); }
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
   filter: brightness(1.1);
 }
 .btn-primary:active { transform: translateY(0); }
@@ -146,12 +146,12 @@ code, pre { font-family: var(--font-mono); }
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.2);
 }
 .btn-ghost:hover {
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(249, 115, 22, 0.1);
   color: var(--accent-2);
-  border-color: rgba(139, 92, 246, 0.35);
+  border-color: rgba(249, 115, 22, 0.35);
 }
 
 .btn-icon {
@@ -166,7 +166,7 @@ code, pre { font-family: var(--font-mono); }
   align-items: center;
   justify-content: center;
 }
-.btn-icon:hover { color: var(--accent-2); background: rgba(139,92,246,0.1); }
+.btn-icon:hover { color: var(--accent-2); background: rgba(249, 115, 22, 0.1); }
 
 /* ── Inputs ────────────────────────────────────────────────────────────────── */
 .input {
@@ -215,7 +215,7 @@ code, pre { font-family: var(--font-mono); }
   background: linear-gradient(90deg, var(--accent-3), var(--accent-cyan));
   border-radius: 2px;
   transition: width 0.4s ease;
-  box-shadow: 0 0 12px rgba(139,92,246,0.5);
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.5);
 }
 
 /* ── Animated gradient background ─────────────────────────────────────────── */
@@ -230,9 +230,9 @@ code, pre { font-family: var(--font-mono); }
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(ellipse at 20% 50%, rgba(139,92,246,0.06) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 20%, rgba(34,211,238,0.04) 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 80%, rgba(124,58,237,0.03) 0%, transparent 50%);
+  background: radial-gradient(ellipse at 20% 50%, rgba(249, 115, 22, 0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(251, 146, 60, 0.04) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(234, 88, 12, 0.03) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
   animation: aurora 20s ease-in-out infinite alternate;
@@ -264,7 +264,7 @@ code, pre { font-family: var(--font-mono); }
 }
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
-  50%       { box-shadow: 0 0 40px rgba(139,92,246,0.5); }
+  50%       { box-shadow: 0 0 40px rgba(249, 115, 22, 0.5); }
 }
 @keyframes shimmer {
   0%   { background-position: -200% 0; }

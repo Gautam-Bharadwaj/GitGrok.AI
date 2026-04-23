@@ -180,7 +180,6 @@ export default function RepoLoader() {
 
       {isIndexed && (
         <div className="repo-loader__indexed animate-fadeInUp">
-          <span>✓</span>
           <span>
             Indexed {status.file_count} files · {status.chunk_count} chunks
           </span>
@@ -195,7 +194,7 @@ export default function RepoLoader() {
 
       {isFailed && (
         <div className="repo-loader__error-box">
-          <span>✗ Ingestion failed</span>
+          <span>Ingestion failed</span>
           {status?.error_message && (
             <p style={{ fontSize: "0.78rem", marginTop: 4, color: "var(--text-muted)" }}>
               {status.error_message}
@@ -229,7 +228,7 @@ export default function RepoLoader() {
           background: currentColor; flex-shrink: 0;
         }
         .repo-loader__step.active .dot {
-          box-shadow: 0 0 8px rgba(139,92,246,0.5);
+          box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
           animation: pulse-glow 1.5s ease-in-out infinite;
         }
         .repo-loader__indexed {

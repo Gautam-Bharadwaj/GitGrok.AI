@@ -149,8 +149,8 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
         .msg__avatar {
           width: 30px; height: 30px; border-radius: 10px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(34,211,238,0.1));
-          color: var(--accent-2); border: 1px solid rgba(139,92,246,0.15);
+          background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(251, 146, 60, 0.1));
+          color: var(--accent-2); border: 1px solid rgba(249, 115, 22, 0.15);
           margin-top: 2px;
         }
         .msg__body { flex: 1; min-width: 0; }
@@ -166,8 +166,8 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
         .msg__content :global(strong) { color: var(--text-primary); }
         .msg__content :global(.inline-code) {
           font-family: var(--font-mono); font-size: 0.85em;
-          background: rgba(139,92,246,0.12); color: var(--accent-2);
-          padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(139,92,246,0.15);
+          background: rgba(249, 115, 22, 0.12); color: var(--accent-2);
+          padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(249, 115, 22, 0.15);
         }
         .cursor {
           display: inline-block; width: 2px; height: 1em;
@@ -190,9 +190,9 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
           white-space: nowrap;
         }
         .followup-btn:hover {
-          background: rgba(139,92,246,0.1);
+          background: rgba(249, 115, 22, 0.1);
           color: var(--accent-2);
-          border-color: rgba(139,92,246,0.25);
+          border-color: rgba(249, 115, 22, 0.25);
         }
       `}</style>
     </div>

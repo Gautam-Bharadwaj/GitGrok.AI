@@ -118,11 +118,11 @@ export default function AnalysisPanel() {
   };
 
   const TABS: { key: Tab; label: string; icon: string }[] = [
-    { key: "stats", label: "Stats", icon: "📊" },
-    { key: "bugs", label: "Bugs", icon: "🔍" },
-    { key: "readme", label: "README", icon: "📄" },
-    { key: "files", label: "Files", icon: "📁" },
-    { key: "export", label: "Export", icon: "💾" },
+    { key: "stats", label: "Stats", icon: "" },
+    { key: "bugs", label: "Bugs", icon: "" },
+    { key: "readme", label: "README", icon: "" },
+    { key: "files", label: "Files", icon: "" },
+    { key: "export", label: "Export", icon: "" },
   ];
 
   return (
@@ -210,7 +210,7 @@ export default function AnalysisPanel() {
               disabled={bugsLoading}
               style={{ marginBottom: 12, width: "100%" }}
             >
-              {bugsLoading ? <><div className="spinner" /> Scanning…</> : "🔍 Scan for Bugs"}
+              {bugsLoading ? <><div className="spinner" /> Scanning…</> : "Scan for Bugs"}
             </Button>
             {bugs.length === 0 && !bugsLoading && (
               <p className="ap__hint">No bugs found yet. Run a scan.</p>
@@ -224,7 +224,7 @@ export default function AnalysisPanel() {
                   <span className="bug-card__file">{bug.file}:{bug.line_range}</span>
                 </div>
                 <p className="bug-card__desc">{bug.description}</p>
-                <p className="bug-card__suggestion">💡 {bug.suggestion}</p>
+                <p className="bug-card__suggestion">Suggestion: {bug.suggestion}</p>
               </div>
             ))}
           </div>
@@ -238,7 +238,7 @@ export default function AnalysisPanel() {
               disabled={readmeLoading}
               style={{ marginBottom: 12, width: "100%" }}
             >
-              {readmeLoading ? <><div className="spinner" /> Generating…</> : "📄 Generate README"}
+              {readmeLoading ? <><div className="spinner" /> Generating…</> : "Generate README"}
             </Button>
             {readme ? (
               <div className="readme-preview">
@@ -274,10 +274,10 @@ export default function AnalysisPanel() {
             <p className="export-desc">Download or copy your current chat as markdown.</p>
             
             <Button onClick={handleExport} style={{ width: "100%", marginBottom: 8 }}>
-              📥 Download as Markdown
+              Download as Markdown
             </Button>
             <Button variant="secondary" onClick={handleCopyChat} style={{ width: "100%" }}>
-              {exportCopied ? "✅ Copied!" : "📋 Copy to Clipboard"}
+              {exportCopied ? "Copied!" : "Copy to Clipboard"}
             </Button>
 
             {messages.length > 0 && (
@@ -318,7 +318,7 @@ export default function AnalysisPanel() {
           border-radius: var(--radius-sm); padding: 14px 12px; text-align: center;
           transition: border-color var(--transition-fast);
         }
-        .stat-card:hover { border-color: rgba(139,92,246,0.25); }
+        .stat-card:hover { border-color: rgba(249, 115, 22, 0.25); }
         .stat-card__value { display: block; font-size: 1.4rem; font-weight: 800; color: var(--accent-2); }
         .stat-card__label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
         .stat-section { grid-column: 1 / -1; margin-top: 8px; }
@@ -340,7 +340,7 @@ export default function AnalysisPanel() {
           background: var(--bg-elevated);
           transition: border-color var(--transition-fast);
         }
-        .bug-card:hover { border-color: rgba(139,92,246,0.2); }
+        .bug-card:hover { border-color: rgba(249, 115, 22, 0.2); }
         .bug-card__header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
         .bug-card__file { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
         .bug-card__desc { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
@@ -358,7 +358,7 @@ export default function AnalysisPanel() {
         .readme-preview :global(h3) { color: var(--text-primary); margin: 0.8em 0 0.4em; }
         .readme-preview :global(code) {
           font-family: var(--font-mono); font-size: 0.8em;
-          background: rgba(139,92,246,0.12); color: var(--accent-2);
+          background: rgba(249, 115, 22, 0.12); color: var(--accent-2);
           padding: 1px 5px; border-radius: 4px;
         }
         .readme-preview :global(pre) { overflow-x: auto; }
@@ -394,7 +394,7 @@ function FileTreeNode({ node, depth }: { node: FileNode; depth: number }) {
         role={node.is_dir ? "button" : undefined}
       >
         <span className="tree-node__icon">
-          {node.is_dir ? (open ? "📂" : "📁") : "📄"}
+          {node.is_dir ? (open ? "[-]" : "[+]") : "•"}
         </span>
         <span className="tree-node__name">{node.name}</span>
         {node.chunk_count > 0 && (
@@ -414,10 +414,10 @@ function FileTreeNode({ node, depth }: { node: FileNode; depth: number }) {
           border-radius: 4px; transition: background var(--transition-fast);
           font-size: 0.8rem;
         }
-        .tree-node:hover { background: rgba(139,92,246,0.08); }
+        .tree-node:hover { background: rgba(249, 115, 22, 0.08); }
         .tree-node__icon { font-size: 0.85rem; flex-shrink: 0; }
         .tree-node__name { color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .tree-node__count { font-size: 0.68rem; color: var(--accent-2); font-weight: 600; background: rgba(139,92,246,0.1); padding: 1px 6px; border-radius: 99px; }
+        .tree-node__count { font-size: 0.68rem; color: var(--accent-2); font-weight: 600; background: rgba(249, 115, 22, 0.1); padding: 1px 6px; border-radius: 99px; }
         .tree-node__lang { font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); }
       `}</style>
     </div>

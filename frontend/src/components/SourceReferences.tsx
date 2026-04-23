@@ -116,7 +116,7 @@ export default function SourceReferences({ sources }: Props) {
         .source-item__lines { color: var(--text-muted); margin-left: 2px; }
         .source-item__name {
           font-size: 0.7rem; color: var(--accent-3);
-          background: rgba(124,58,237,0.1); padding: 1px 6px;
+          background: rgba(234, 88, 12, 0.1); padding: 1px 6px;
           border-radius: 99px; white-space: nowrap;
         }
         .source-item__snippet { border-top: 1px solid rgba(255,255,255,0.06); }

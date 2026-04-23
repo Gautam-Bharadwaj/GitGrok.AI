@@ -103,7 +103,7 @@ export default function ChatWindow() {
           }
           .chat-empty__example:hover {
             color: var(--text-secondary);
-            border-color: rgba(139,92,246,0.25);
+            border-color: rgba(249, 115, 22, 0.25);
           }
         `}</style>
       </div>
@@ -222,8 +222,8 @@ export default function ChatWindow() {
         .chat-header__icon {
           width: 36px; height: 36px; border-radius: 10px;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(139,92,246,0.12); color: var(--accent-2);
-          border: 1px solid rgba(139,92,246,0.15);
+          background: rgba(249, 115, 22, 0.12); color: var(--accent-2);
+          border: 1px solid rgba(249, 115, 22, 0.15);
         }
         .chat-header__name { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
         .chat-header__meta { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 5px; }
@@ -245,7 +245,7 @@ export default function ChatWindow() {
           border-radius: 12px; color: var(--text-secondary);
           cursor: pointer; transition: all var(--transition-fast); text-align: left;
         }
-        .followup-btn:hover { background: rgba(139,92,246,0.1); color: var(--accent-2); border-color: rgba(139,92,246,0.25); }
+        .followup-btn:hover { background: rgba(249, 115, 22, 0.1); color: var(--accent-2); border-color: rgba(249, 115, 22, 0.25); }
         
         .chat-input-bar {
           position: absolute; bottom: 0; left: 0; right: 0;
