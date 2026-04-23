@@ -3,14 +3,13 @@ services/github_service.py — Clones GitHub repositories using shallow clones,
 manages local source file listing, and handles cleanup.
 """
 
-import asyncio
 import logging
-import os
 import shutil
 import urllib.parse
 from pathlib import Path
 
 from app.config import get_settings
+from app.utils.file_filter import collect_source_files
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -59,17 +58,15 @@ def list_source_files(clone_dir: str) -> list[str]:
     """
     Recursively list all source files in the repository.
     """
-    exclude_dirs = {".git", "node_modules", "vendor", "__pycache__", ".venv", "dist", "build"}
-    exclude_exts = {".jpg", ".png", ".gif", ".pdf", ".exe", ".bin", ".pyc", ".map", ".ico"}
-    
-    files = []
     base_path = Path(clone_dir)
-    for root, dirs, filenames in os.walk(base_path):
-        dirs[:] = [d for d in dirs if d not in exclude_dirs]
-        for f in filenames:
-            ext = Path(f).suffix.lower()
-            if ext not in exclude_exts:
-                files.append(str(Path(root) / f))
+    files = [str(p) for p in collect_source_files(base_path)]
+    if len(files) > settings.ingestion_max_files:
+        logger.warning(
+            "Large repository detected (%d files). Truncating to first %d files for faster ingestion.",
+            len(files),
+            settings.ingestion_max_files,
+        )
+        return files[: settings.ingestion_max_files]
     return files
 
 def cleanup_clone(repo_id: str) -> None:

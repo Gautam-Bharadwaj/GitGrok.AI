@@ -125,9 +125,13 @@ async def _sse_stream(
         logger.error("SSE stream error: %s", exc)
         yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n".encode()
     finally:
-        # Persist regardless of client disconnect
-        await _persist_messages(session_id, question, full_answer, sources, None, db)
-        await db.commit()
+        # Persist regardless of client disconnect, but never break stream teardown.
+        try:
+            await _persist_messages(session_id, question, full_answer, sources, None, db)
+            await db.commit()
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to persist streamed chat session %s: %s", session_id, exc)
+            await db.rollback()
         yield f"data: {json.dumps({'type': 'done', 'session_id': session_id})}\n\n".encode()
 
 
@@ -162,6 +166,15 @@ async def ask(
     if not body.stream:
         cached = await get_cached_answer(body.repo_id, body.question)
         if cached:
+            await _persist_messages(
+                session.id,
+                body.question,
+                cached["answer"],
+                cached.get("sources", []),
+                cached.get("tokens_used"),
+                db,
+            )
+            await db.commit()
             return cached
 
     result = await answer_question(
@@ -193,6 +206,7 @@ async def ask(
     tokens_used = result["tokens_used"]
 
     await _persist_messages(session.id, body.question, answer, sources, tokens_used, db)
+    await db.commit()
 
     response_body = {
         "session_id": session.id,

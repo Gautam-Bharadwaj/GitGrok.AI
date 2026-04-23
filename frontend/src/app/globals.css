@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   globals.css — Design System for RepoMind
+   globals.css — Design System for GitGrok.AI
    Dark-mode first, glassmorphism, CSS custom properties
 ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -15,30 +15,30 @@
 }
 
 :root {
-  /* Palette (Hiration Style Light Theme) */
-  --bg-base:        #f8fafc; /* Very soft slate/gray */
-  --bg-surface:     #ffffff; /* Pure white cards */
+  /* Palette (White / Blue / Black Theme) */
+  --bg-base:        #f5f8ff;
+  --bg-surface:     #ffffff;
   --bg-elevated:    #ffffff;
-  --bg-glass:       rgba(255, 255, 255, 0.95);
-  --bg-glass-hover: #f1f5f9;
+  --bg-glass:       rgba(255, 255, 255, 0.98);
+  --bg-glass-hover: #eaf1ff;
 
   /* Brand */
-  --accent-1:       #004ee9; /* Hiration's deep primary blue */
-  --accent-2:       #2872ff; /* Vibrant primary */
-  --accent-3:       #3b82f6;
-  --accent-glow:    rgba(0, 78, 233, 0.2);
+  --accent-1:       #0a49ff;
+  --accent-2:       #2563ff;
+  --accent-3:       #1d4ed8;
+  --accent-glow:    rgba(37, 99, 255, 0.24);
 
   /* Text */
-  --text-primary:   #0f172a; /* Slate 900 for high contrast */
-  --text-secondary: #475569; /* Slate 600 */
-  --text-muted:     #94a3b8; /* Slate 400 */
-  --text-code:      #1e293b;
+  --text-primary:   #05070d;
+  --text-secondary: #1f2937;
+  --text-muted:     #5b6474;
+  --text-code:      #0b1020;
 
   /* Status */
   --success:        #10b981;
   --warning:        #f59e0b;
   --error:          #ef4444;
-  --info:           #004ee9;
+  --info:           #2563ff;
 
   /* Layout */
   --sidebar-width:  260px;
@@ -82,15 +82,15 @@ code, pre { font-family: var(--font-mono); }
 /* ── Glass cards & Containers ─────────────────────────────────────────────── */
 .glass {
   background: var(--bg-surface);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  border: 1px solid rgba(10, 73, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
   border-radius: var(--radius-md);
 }
 
 .glass:hover {
   background: var(--bg-surface);
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+  border-color: rgba(10, 73, 255, 0.2);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
@@ -130,12 +130,12 @@ code, pre { font-family: var(--font-mono); }
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid rgba(0,0,0,0.08); /* light theme adjustment */
+  border: 1px solid rgba(10, 73, 255, 0.2);
 }
 .btn-ghost:hover {
   background: var(--bg-glass-hover);
-  color: var(--text-primary);
-  border-color: rgba(0,0,0,0.15);
+  color: var(--accent-1);
+  border-color: rgba(10, 73, 255, 0.34);
 }
 
 .btn-icon {
@@ -155,7 +155,7 @@ code, pre { font-family: var(--font-mono); }
 /* ── Inputs ────────────────────────────────────────────────────────────────── */
 .input {
   background: var(--bg-surface);
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(15, 23, 42, 0.14);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -168,7 +168,7 @@ code, pre { font-family: var(--font-mono); }
 .input::placeholder { color: var(--text-muted); }
 .input:focus {
   border-color: var(--accent-1);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  box-shadow: 0 0 0 3px var(--accent-glow), 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 /* ── Badges ────────────────────────────────────────────────────────────────── */
@@ -184,7 +184,7 @@ code, pre { font-family: var(--font-mono); }
 }
 .badge-critical { background: rgba(239,68,68,0.15); color: var(--critical); border: 1px solid rgba(239,68,68,0.3); }
 .badge-warning  { background: rgba(245,158,11,0.15); color: var(--warning);  border: 1px solid rgba(245,158,11,0.3); }
-.badge-info     { background: rgba(56,189,248,0.15); color: var(--info);     border: 1px solid rgba(56,189,248,0.3); }
+.badge-info     { background: rgba(37,99,255,0.14); color: var(--info);     border: 1px solid rgba(37,99,255,0.32); }
 .badge-success  { background: rgba(34,197,94,0.15);  color: var(--success);  border: 1px solid rgba(34,197,94,0.3);  }
 
 /* ── Progress bar ──────────────────────────────────────────────────────────── */
@@ -284,7 +284,7 @@ code, pre { font-family: var(--font-mono); }
 
 .app-sidebar {
   grid-area: sidebar;
-  border-right: 1px solid rgba(0,0,0,0.08);
+  border-right: 1px solid rgba(10, 73, 255, 0.12);
   overflow-y: auto;
   background: var(--bg-surface);
   display: flex;

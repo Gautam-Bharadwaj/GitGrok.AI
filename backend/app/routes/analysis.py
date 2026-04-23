@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.repo import Repository, RepoStatus
 from app.services.llm_service import get_answer, handle_bug_detection, handle_readme_generation
-from app.services.retrieval_service import build_context, retrieve
+from app.services.retrieval_service import retrieve
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/analysis", tags=["Analysis"])

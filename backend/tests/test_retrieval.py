@@ -124,9 +124,7 @@ class TestRetrieve:
         mock_response = MagicMock()
         mock_response.data = [MagicMock(embedding=fake_vec)]
 
-        with patch(
-            "app.services.retrieval_service._get_client"
-        ) as mock_client_factory:
+        with patch("app.services.embedding_service._get_client") as mock_client_factory:
             mock_client = AsyncMock()
             mock_client.embeddings.create = AsyncMock(return_value=mock_response)
             mock_client_factory.return_value = mock_client

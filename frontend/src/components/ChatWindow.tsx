@@ -8,6 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { useChatStore } from "@/store/chatStore";
 import { useStreamingChat } from "@/hooks/useStreamingChat";
 import MessageBubble from "./MessageBubble";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const PLACEHOLDER_QUESTIONS = [
   "Explain the overall architecture of this project",
@@ -60,7 +62,7 @@ export default function ChatWindow() {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
-          <h2>RepoMind</h2>
+          <h2>GitGrok.AI</h2>
           <p>Load a GitHub repository from the sidebar, then ask any question about the code.</p>
           <div className="chat-empty__examples">
             {PLACEHOLDER_QUESTIONS.map((q) => (
@@ -117,9 +119,9 @@ export default function ChatWindow() {
             </p>
           </div>
         </div>
-        <button className="btn btn-ghost" style={{ fontSize: "0.78rem" }} onClick={clearMessages}>
+        <Button variant="secondary" style={{ fontSize: "0.78rem" }} onClick={clearMessages}>
           New chat
-        </button>
+        </Button>
       </div>
 
       {/* Messages */}
@@ -155,10 +157,10 @@ export default function ChatWindow() {
       {/* Input bar */}
       <div className="chat-input-bar">
         <div className="chat-input-wrap">
-          <textarea
+          <Textarea
             id="chat-input"
             ref={inputRef}
-            className="input chat-textarea"
+            className="chat-textarea"
             placeholder="Ask about the code…  (Shift+Enter for new line)"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -167,9 +169,9 @@ export default function ChatWindow() {
             disabled={isStreaming}
           />
           {isStreaming ? (
-            <button
+            <Button
               id="cancel-stream-btn"
-              className="btn btn-ghost"
+              variant="secondary"
               style={{ flexShrink: 0 }}
               onClick={cancelStream}
             >
@@ -177,11 +179,10 @@ export default function ChatWindow() {
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
               </svg>
               Stop
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               id="send-message-btn"
-              className="btn btn-primary"
               style={{ flexShrink: 0 }}
               onClick={handleSend}
               disabled={!input.trim()}
@@ -191,7 +192,7 @@ export default function ChatWindow() {
                 <polygon points="22 2 15 22 11 13 2 9 22 2"/>
               </svg>
               Send
-            </button>
+            </Button>
           )}
         </div>
         <p className="chat-hint">GPT-4o · RAG · {isStreaming ? "streaming…" : "ready"}</p>

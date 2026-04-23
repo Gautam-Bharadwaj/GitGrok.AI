@@ -1,5 +1,5 @@
 /**
- * lib/api.ts — Typed API client for the RepoMind backend.
+ * lib/api.ts — Typed API client for the GitGrok.AI backend.
  *
  * All functions throw on HTTP errors so callers can handle them uniformly.
  */
@@ -109,8 +109,13 @@ export const repoApi = {
   status: (repo_id: string) =>
     apiFetch<RepoStatusDetail>(`/api/v1/repo/status/${repo_id}`),
 
-  delete: (repo_id: string) =>
-    fetch(`${API_BASE}/api/v1/repo/${repo_id}`, { method: "DELETE" }),
+  delete: async (repo_id: string) => {
+    const response = await fetch(`${API_BASE}/api/v1/repo/${repo_id}`, { method: "DELETE" });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Failed to delete repository." }));
+      throw new Error(error.detail ?? `HTTP ${response.status}`);
+    }
+  },
 };
 
 // ── Chat API ──────────────────────────────────────────────────────────────────
@@ -147,7 +152,10 @@ export const chatApi = {
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const reader = res.body!.getReader();
+        if (!res.body) {
+          throw new Error("Streaming response body is empty.");
+        }
+        const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
 

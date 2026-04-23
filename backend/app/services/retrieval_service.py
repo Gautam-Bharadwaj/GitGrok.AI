@@ -99,6 +99,10 @@ async def retrieve(
         logger.warning("Empty FAISS index for repo %s", repo_id)
         return []
 
+    if settings.openai_api_key == "your_openai_api_key_here":
+        logger.warning("Using placeholder OpenAI key, bypassing retrieval to prevent AuthenticationError")
+        return metadata[:top_k]
+
     query_vec = await embed_query(query)
 
     # Fetch more candidates than needed for MMR

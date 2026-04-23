@@ -5,6 +5,7 @@ Using OpenAI for embeddings is RAM-efficient for cloud hosting (Render Free).
 """
 
 import asyncio
+import hashlib
 import logging
 import pickle
 from pathlib import Path
@@ -22,10 +23,29 @@ settings = get_settings()
 
 # Embedding dimension for text-embedding-3-small
 EMBED_DIM = 1536
-BATCH_SIZE = 100 
 
 def _get_client() -> AsyncOpenAI:
     return AsyncOpenAI(api_key=settings.openai_api_key)
+
+
+def _use_local_embedding_fallback() -> bool:
+    key = (settings.openai_api_key or "").strip().lower()
+    return not key or key == "your_openai_api_key_here"
+
+
+def _local_embedding(text: str) -> list[float]:
+    """
+    Deterministic local embedding fallback for development when OpenAI key is missing.
+    Produces a stable normalized vector from text content.
+    """
+    digest = hashlib.sha256(text.encode("utf-8", errors="ignore")).digest()
+    seed = int.from_bytes(digest[:8], "little", signed=False)
+    rng = np.random.default_rng(seed)
+    vec = rng.standard_normal(EMBED_DIM, dtype=np.float32)
+    norm = np.linalg.norm(vec)
+    if norm > 0:
+        vec = vec / norm
+    return vec.tolist()
 
 def _index_dir(repo_id: str) -> Path:
     d = Path(settings.faiss_index_dir) / repo_id
@@ -33,6 +53,10 @@ def _index_dir(repo_id: str) -> Path:
     return d
 
 async def _embed_texts(client: AsyncOpenAI, texts: list[str]) -> list[list[float]]:
+    if _use_local_embedding_fallback():
+        logger.warning("OpenAI key missing/placeholder; using local embedding fallback.")
+        return [_local_embedding(t) for t in texts]
+
     response = await client.embeddings.create(
         model=settings.embedding_model,
         input=texts,
@@ -51,8 +75,11 @@ async def embed_and_index(
     total = len(chunks)
     logger.info("Embedding %d chunks for repo %s via OpenAI", total, repo_id)
 
-    for batch_start in range(0, total, BATCH_SIZE):
-        batch = chunks[batch_start : batch_start + BATCH_SIZE]
+    batch_size = max(1, settings.embedding_batch_size)
+    delay_seconds = max(0, settings.embedding_batch_delay_ms) / 1000
+
+    for batch_start in range(0, total, batch_size):
+        batch = chunks[batch_start : batch_start + batch_size]
         texts = [
             f"File: {c.file_path}\nType: {c.chunk_type}\nName: {c.name}\n\n{c.content}" 
             for c in batch
@@ -72,8 +99,8 @@ async def embed_and_index(
         if progress_callback:
             await progress_callback(pct, f"Embedded {batch_start + len(batch)}/{total} chunks")
 
-        if batch_start + BATCH_SIZE < total:
-            await asyncio.sleep(0.2)
+        if delay_seconds and batch_start + batch_size < total:
+            await asyncio.sleep(delay_seconds)
 
     # ── Build FAISS index ──────────────────────────────────────────────────────
     matrix = np.array(all_vectors, dtype=np.float32)

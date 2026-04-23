@@ -143,16 +143,17 @@ async def stream_answer(
     client = _get_client()
     model = _get_model()
     try:
-        async with client.chat.completions.stream(
+        stream = await client.chat.completions.create(
             model=model,
             messages=messages,  # type: ignore[arg-type]
             temperature=0.2,
             max_tokens=2048,
-        ) as stream:
-            async for event in stream:
-                delta = event.choices[0].delta.content if event.choices else None
-                if delta:
-                    yield delta
+            stream=True,
+        )
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                yield delta
     except Exception as exc:
         logger.error("Streaming LLM error: %s", exc)
         yield f"\n\n[Error: {exc}]"

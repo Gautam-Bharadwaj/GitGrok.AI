@@ -13,6 +13,7 @@ const POLL_INTERVAL_MS = 2000;
 export function useRepoStatus(repoId: string | null) {
   const setRepoStatus = useChatStore((s) => s.setRepoStatus);
   const upsertRepo = useChatStore((s) => s.upsertRepo);
+  const repos = useChatStore((s) => s.repos);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = useCallback(() => {
@@ -31,13 +32,14 @@ export function useRepoStatus(repoId: string | null) {
           setRepoStatus(id, detail);
 
           // Sync minimal summary into repos list
+          const existing = repos.find((r) => r.repo_id === id);
           upsertRepo({
             repo_id: id,
-            name: id,          // name will be corrected by list refresh
-            url: "",
+            name: existing?.name ?? id,
+            url: existing?.url ?? "",
             status: detail.status,
             chunk_count: detail.chunk_count,
-            indexed_at: detail.indexed_at,
+            indexed_at: detail.indexed_at ?? existing?.indexed_at ?? null,
           });
 
           if (detail.status === "INDEXED" || detail.status === "FAILED") {
@@ -48,7 +50,7 @@ export function useRepoStatus(repoId: string | null) {
         }
       }, POLL_INTERVAL_MS);
     },
-    [setRepoStatus, stopPolling, upsertRepo]
+    [repos, setRepoStatus, stopPolling, upsertRepo]
   );
 
   useEffect(() => {

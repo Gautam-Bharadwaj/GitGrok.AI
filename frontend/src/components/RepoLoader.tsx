@@ -10,6 +10,8 @@ import { useState } from "react";
 import { repoApi, RepoStatusDetail } from "@/lib/api";
 import { useChatStore } from "@/store/chatStore";
 import { useRepoStatus } from "@/hooks/useRepoStatus";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const STEPS = [
   { label: "Cloning repository", threshold: 20 },
@@ -95,9 +97,8 @@ export default function RepoLoader() {
       </div>
 
       <form onSubmit={handleSubmit} className="repo-loader__form">
-        <input
+        <Input
           id="repo-url-input"
-          className="input"
           type="text"
           placeholder="https://github.com/owner/repo"
           value={url}
@@ -106,19 +107,18 @@ export default function RepoLoader() {
           autoComplete="off"
         />
 
-        <button
+        <Button
           type="button"
-          className="btn-ghost btn"
+          variant="secondary"
           style={{ fontSize: "0.78rem", padding: "0.3rem 0.7rem" }}
           onClick={() => setShowToken((v) => !v)}
         >
           {showToken ? "Hide" : "Private repo? Add token"}
-        </button>
+        </Button>
 
         {showToken && (
-          <input
+          <Input
             id="github-token-input"
-            className="input"
             type="password"
             placeholder="GitHub Personal Access Token (optional)"
             value={token}
@@ -130,10 +130,9 @@ export default function RepoLoader() {
           <p className="repo-loader__error">{error}</p>
         )}
 
-        <button
+        <Button
           id="load-repo-btn"
           type="submit"
-          className="btn btn-primary"
           disabled={loading || !url.trim()}
           style={{ width: "100%" }}
         >
@@ -142,7 +141,7 @@ export default function RepoLoader() {
           ) : (
             "Load & Index Repository"
           )}
-        </button>
+        </Button>
       </form>
 
       {/* Progress UI */}
@@ -185,13 +184,12 @@ export default function RepoLoader() {
           <span>
             Indexed {status.file_count} files · {status.chunk_count} chunks
           </span>
-          <button
-            className="btn btn-primary"
+          <Button
             style={{ marginLeft: "auto", padding: "0.35rem 0.9rem", fontSize: "0.8rem" }}
             onClick={() => setActiveRepo(pollingId)}
           >
             Open Chat →
-          </button>
+          </Button>
         </div>
       )}
 

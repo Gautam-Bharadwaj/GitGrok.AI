@@ -9,7 +9,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { analysisApi } from "@/lib/api";
 import { useChatStore, SidebarTab } from "@/store/chatStore";
-import CodeSnippet from "./CodeSnippet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const TABS: { id: SidebarTab; label: string; icon: React.ReactNode }[] = [
   {
@@ -35,30 +36,34 @@ const TABS: { id: SidebarTab; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-const SEV_CLASS: Record<string, string> = {
-  CRITICAL: "badge-critical",
-  WARNING:  "badge-warning",
-  INFO:     "badge-info",
-};
-
 export default function AnalysisPanel() {
-  const {
-    activeRepoId,
-    bugs, readme,
-    bugsLoading, readmeLoading,
-    setBugs, setReadme,
-    setBugsLoading, setReadmeLoading,
-    sidebarTab, setSidebarTab,
-  } = useChatStore();
+  const activeRepoId = useChatStore((s) => s.activeRepoId);
+  const bugs = useChatStore((s) => s.bugs);
+  const readme = useChatStore((s) => s.readme);
+  const bugsLoading = useChatStore((s) => s.bugsLoading);
+  const readmeLoading = useChatStore((s) => s.readmeLoading);
+  const setBugs = useChatStore((s) => s.setBugs);
+  const setReadme = useChatStore((s) => s.setReadme);
+  const setBugsLoading = useChatStore((s) => s.setBugsLoading);
+  const setReadmeLoading = useChatStore((s) => s.setReadmeLoading);
+  const sidebarTab = useChatStore((s) => s.sidebarTab);
+  const setSidebarTab = useChatStore((s) => s.setSidebarTab);
+  const [panelError, setPanelError] = useState<string | null>(null);
+  const severityToVariant = (severity: string): "critical" | "warning" | "default" => {
+    if (severity === "CRITICAL") return "critical";
+    if (severity === "WARNING") return "warning";
+    return "default";
+  };
 
   const handleRunBugs = async () => {
     if (!activeRepoId || bugsLoading) return;
     setBugsLoading(true);
+    setPanelError(null);
     try {
       const res = await analysisApi.bugs(activeRepoId);
       setBugs(res.findings);
     } catch (e: any) {
-      console.error(e);
+      setPanelError(e?.message ?? "Failed to run bug scan.");
     } finally {
       setBugsLoading(false);
     }
@@ -67,18 +72,24 @@ export default function AnalysisPanel() {
   const handleGenReadme = async () => {
     if (!activeRepoId || readmeLoading) return;
     setReadmeLoading(true);
+    setPanelError(null);
     try {
       const res = await analysisApi.readme(activeRepoId);
       setReadme(res.markdown);
     } catch (e: any) {
-      console.error(e);
+      setPanelError(e?.message ?? "Failed to generate README.");
     } finally {
       setReadmeLoading(false);
     }
   };
 
-  const handleCopyReadme = () => {
-    if (readme) navigator.clipboard.writeText(readme);
+  const handleCopyReadme = async () => {
+    if (!readme) return;
+    try {
+      await navigator.clipboard.writeText(readme);
+    } catch {
+      setPanelError("Unable to copy README. Clipboard access was denied.");
+    }
   };
 
   const handleDownloadReadme = () => {
@@ -124,15 +135,15 @@ export default function AnalysisPanel() {
       {/* Bugs tab */}
       {sidebarTab === "bugs" && (
         <div className="ap__body animate-fadeIn">
-          <button
+          <Button
             id="run-bugs-btn"
-            className="btn btn-primary"
             style={{ width: "100%", marginBottom: "1rem" }}
             onClick={handleRunBugs}
             disabled={bugsLoading}
           >
             {bugsLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Scanning…</> : "Scan for Bugs"}
-          </button>
+          </Button>
+          {panelError && <p className="ap__hint" style={{ color: "var(--error)", marginBottom: "0.75rem" }}>{panelError}</p>}
 
           {bugs.length === 0 && !bugsLoading && (
             <p className="ap__hint">Run a scan to detect security issues and logic bugs.</p>
@@ -141,9 +152,9 @@ export default function AnalysisPanel() {
           {bugs.map((bug, i) => (
             <div key={i} className="bug-card glass">
               <div className="bug-card__header">
-                <span className={`badge ${SEV_CLASS[bug.severity] ?? "badge-info"}`}>
+                <Badge variant={severityToVariant(bug.severity)}>
                   {bug.severity}
-                </span>
+                </Badge>
                 <span className="bug-card__file truncate">
                   {bug.file}:{bug.line_range}
                 </span>
@@ -159,33 +170,33 @@ export default function AnalysisPanel() {
       {sidebarTab === "readme" && (
         <div className="ap__body animate-fadeIn">
           <div style={{ display: "flex", gap: 6, marginBottom: "1rem" }}>
-            <button
+            <Button
               id="gen-readme-btn"
-              className="btn btn-primary"
               style={{ flex: 1 }}
               onClick={handleGenReadme}
               disabled={readmeLoading}
             >
               {readmeLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Generating…</> : "Generate README"}
-            </button>
+            </Button>
             {readme && (
               <>
-                <button id="copy-readme-btn" className="btn btn-ghost" onClick={handleCopyReadme} title="Copy">
+                <Button id="copy-readme-btn" variant="secondary" onClick={handleCopyReadme} title="Copy">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                   </svg>
-                </button>
-                <button id="download-readme-btn" className="btn btn-ghost" onClick={handleDownloadReadme} title="Download">
+                </Button>
+                <Button id="download-readme-btn" variant="secondary" onClick={handleDownloadReadme} title="Download">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
-                </button>
+                </Button>
               </>
             )}
           </div>
+          {panelError && <p className="ap__hint" style={{ color: "var(--error)", marginBottom: "0.75rem" }}>{panelError}</p>}
 
           {readme ? (
             <div className="readme-preview glass">

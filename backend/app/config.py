@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     embedding_model: str = Field(
         "text-embedding-3-small", description="OpenAI embedding model"
     )
+    embedding_batch_size: int = Field(200, description="Batch size for embedding requests")
+    embedding_batch_delay_ms: int = Field(0, description="Delay between embedding batches in milliseconds")
+    ingestion_max_files: int = Field(3000, description="Maximum files to process during ingestion")
     max_context_tokens: int = Field(6000, description="Token budget for LLM context")
     top_k_retrieval: int = Field(8, description="Number of chunks to retrieve")
 
@@ -52,6 +55,10 @@ class Settings(BaseSettings):
         "sqlite+aiosqlite:///./data/app.db", description="SQLAlchemy async DB URL"
     )
     redis_url: str = Field("redis://localhost:6379/0", description="Redis connection URL")
+    ingestion_mode: str = Field(
+        "inline",
+        description="Repository ingestion mode: inline | celery",
+    )
 
     # ── FAISS ────────────────────────────────────────────────────────────────
     faiss_index_dir: str = Field("./data/faiss", description="Root dir for FAISS indexes")

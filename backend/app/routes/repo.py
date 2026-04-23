@@ -8,24 +8,29 @@ DELETE /api/v1/repo/{id}          — Delete repo + index + chat history
 """
 
 import logging
+import re
 import uuid
+import asyncio
 from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import AnyHttpUrl, BaseModel, Field
+from pydantic import BaseModel, Field
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.config import get_settings
 from app.models.chat import ChatMessage, ChatSession
 from app.models.repo import Repository, RepoStatus
 from app.services.cache_service import invalidate_repo_cache
 from app.services.embedding_service import delete_index
-from app.workers.ingestion_worker import ingest_repository
+from app.workers.ingestion_worker import ingest_repository, _run_ingestion_task
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/repo", tags=["Repository"])
+GITHUB_URL_RE = re.compile(r"^(https://github\.com/[\w.-]+/[\w.-]+(?:\.git)?|git@github\.com:[\w.-]+/[\w.-]+(?:\.git)?)$")
+settings = get_settings()
 
 
 # ── Request / Response schemas ─────────────────────────────────────────────────
@@ -72,7 +77,7 @@ async def load_repository(
     Creates a DB record with PENDING status and dispatches the Celery task.
     Returns immediately with the new repo_id; poll /status/{repo_id} for updates.
     """
-    if not body.url.startswith(("https://", "git@", "http://")):
+    if not GITHUB_URL_RE.match(body.url.strip()):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="URL must be a valid GitHub HTTPS or SSH URL.",
@@ -92,15 +97,25 @@ async def load_repository(
     db.add(repo)
     await db.flush()
 
-    # Dispatch async Celery task
-    ingest_repository.apply_async(
-        kwargs={
-            "repo_id": repo_id,
-            "url": body.url,
-            "access_token": body.access_token or "",
-        },
-        task_id=repo_id,
-    )
+    # Dispatch ingestion task.
+    # In local/dev mode, run inline so the app works without a separate Celery worker.
+    if settings.ingestion_mode.lower() == "celery":
+        ingest_repository.apply_async(
+            kwargs={
+                "repo_id": repo_id,
+                "url": body.url,
+                "access_token": body.access_token or "",
+            },
+            task_id=repo_id,
+        )
+    else:
+        asyncio.create_task(
+            _run_ingestion_task(
+                repo_id=repo_id,
+                url=body.url,
+                access_token=body.access_token or "",
+            )
+        )
 
     logger.info("Enqueued ingestion task for repo %s (%s)", repo_id, body.url)
     return LoadRepoResponse(repo_id=repo_id)
