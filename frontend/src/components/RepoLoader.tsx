@@ -223,27 +223,27 @@ export default function RepoLoader() {
           font-size: 0.78rem; color: var(--text-muted); transition: color 0.3s;
         }
         .repo-loader__step.done { color: var(--success); }
-        .repo-loader__step.active { color: var(--accent-3); }
+        .repo-loader__step.active { color: var(--accent-2); }
         .repo-loader__step .dot {
           width: 6px; height: 6px; border-radius: 50%;
           background: currentColor; flex-shrink: 0;
         }
         .repo-loader__step.active .dot {
-          box-shadow: 0 0 6px var(--accent-2);
+          box-shadow: 0 0 8px rgba(139,92,246,0.5);
           animation: pulse-glow 1.5s ease-in-out infinite;
         }
         .repo-loader__indexed {
           display: flex; align-items: center; gap: 8px;
           margin-top: 1rem; padding: 10px 12px;
-          background: rgba(34,197,94,0.1);
-          border: 1px solid rgba(34,197,94,0.25);
+          background: rgba(52,211,153,0.08);
+          border: 1px solid rgba(52,211,153,0.2);
           border-radius: var(--radius-sm);
           font-size: 0.82rem; color: var(--success);
         }
         .repo-loader__error-box {
           margin-top: 1rem; padding: 10px 12px;
-          background: rgba(239,68,68,0.1);
-          border: 1px solid rgba(239,68,68,0.25);
+          background: rgba(248,113,113,0.08);
+          border: 1px solid rgba(248,113,113,0.2);
           border-radius: var(--radius-sm);
           font-size: 0.82rem; color: var(--error);
         }

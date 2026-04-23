@@ -58,15 +58,19 @@ export default function ChatWindow() {
       <div className="chat-empty gradient-bg">
         <div className="chat-empty__inner">
           <div className="chat-empty__icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+              <path d="M9 18c-4.51 2-5-2-7-2"/>
             </svg>
           </div>
-          <h2>GitGrok.AI</h2>
-          <p>Load a GitHub repository from the sidebar, then ask any question about the code.</p>
+          <h2>Chat with your codebase</h2>
+          <p>Index a GitHub repository, then ask anything about the code — architecture, bugs, docs, and more.</p>
           <div className="chat-empty__examples">
             {PLACEHOLDER_QUESTIONS.map((q) => (
               <div key={q} className="chat-empty__example glass">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity: 0.4, flexShrink: 0}}>
+                  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                </svg>
                 {q}
               </div>
             ))}
@@ -75,26 +79,31 @@ export default function ChatWindow() {
         <style jsx>{`
           .chat-empty {
             flex: 1; display: flex; align-items: center; justify-content: center;
-            padding: 2rem; overflow-y: auto;
+            padding: 2rem; overflow-y: auto; position: relative; z-index: 1;
           }
-          .chat-empty__inner { max-width: 560px; text-align: center; }
+          .chat-empty__inner { max-width: 540px; text-align: center; }
           .chat-empty__icon {
-            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1.5rem;
+            width: 72px; height: 72px; border-radius: 20px; margin: 0 auto 1.5rem;
             display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-            color: #fff; box-shadow: 0 0 40px var(--accent-glow);
+            background: linear-gradient(135deg, var(--accent-3), var(--accent-1));
+            color: #fff; box-shadow: 0 0 60px var(--accent-glow);
             animation: pulse-glow 3s ease-in-out infinite;
           }
           .chat-empty__inner h2 {
-            font-size: 1.5rem; margin-bottom: 0.75rem;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-3));
+            font-size: 1.5rem; margin-bottom: 0.75rem; font-weight: 800;
+            background: linear-gradient(135deg, #fff, var(--accent-2));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           }
-          .chat-empty__inner p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; }
-          .chat-empty__examples { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+          .chat-empty__inner p { color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 2rem; line-height: 1.6; }
+          .chat-empty__examples { display: flex; flex-direction: column; gap: 6px; text-align: left; }
           .chat-empty__example {
-            padding: 10px 14px; font-size: 0.83rem; color: var(--text-muted);
+            padding: 12px 16px; font-size: 0.82rem; color: var(--text-muted);
             cursor: default; transition: all var(--transition-fast);
+            display: flex; align-items: center; gap: 10px;
+          }
+          .chat-empty__example:hover {
+            color: var(--text-secondary);
+            border-color: rgba(139,92,246,0.25);
           }
         `}</style>
       </div>
@@ -115,7 +124,7 @@ export default function ChatWindow() {
           <div>
             <p className="chat-header__name">{activeRepo?.name ?? activeRepoId}</p>
             <p className="chat-header__meta">
-              {activeRepo?.chunk_count ?? "?"} chunks · INDEXED
+              {activeRepo?.chunk_count ?? "?"} chunks · <span className="status-dot" />INDEXED
             </p>
           </div>
         </div>
@@ -195,38 +204,48 @@ export default function ChatWindow() {
             </Button>
           )}
         </div>
-        <p className="chat-hint">GPT-4o · RAG · {isStreaming ? "streaming…" : "ready"}</p>
+        <p className="chat-hint">
+          <span className="hint-dot" />
+          {isStreaming ? "Streaming response…" : "RAG-powered · Ready"}
+        </p>
       </div>
 
       <style jsx>{`
         .chat-window { display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative; background: var(--bg-base); }
         .chat-header {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 1.25rem 1.5rem;
-          border-bottom: 1px solid rgba(0,0,0,0.05);
-          background: #ffffff; z-index: 10;
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: rgba(17,17,20,0.8); backdrop-filter: blur(12px); z-index: 10;
         }
         .chat-header__info { display: flex; align-items: center; gap: 12px; }
         .chat-header__icon {
-          width: 36px; height: 36px; border-radius: 8px;
+          width: 36px; height: 36px; border-radius: 10px;
           display: flex; align-items: center; justify-content: center;
-          background: #f1f5f9; color: var(--accent-1); border: 1px solid rgba(0,0,0,0.05);
+          background: rgba(139,92,246,0.12); color: var(--accent-2);
+          border: 1px solid rgba(139,92,246,0.15);
         }
-        .chat-header__name { font-weight: 700; font-size: 1rem; color: var(--text-primary); }
-        .chat-header__meta { font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
+        .chat-header__name { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
+        .chat-header__meta { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        .status-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--success);
+          box-shadow: 0 0 8px rgba(52,211,153,0.5);
+          display: inline-block;
+        }
         .chat-messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; padding-bottom: 140px; }
         .chat-messages > * { width: 100%; max-width: 800px; }
         
         .chat-starter { text-align: center; padding: 4rem 0; color: var(--text-secondary); font-size: 1.05rem; }
         .chat-starter__chips { display: flex; flex-direction: row; gap: 10px; justify-content: center; max-width: 600px; margin: 2rem auto 0; flex-wrap: wrap; }
         .followup-btn {
-          font-size: 0.85rem; padding: 10px 18px;
-          background: #ffffff; font-weight: 500;
-          border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+          font-size: 0.82rem; padding: 10px 18px;
+          background: var(--bg-elevated); font-weight: 500;
+          border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 4px 12px rgba(0,0,0,0.2);
           border-radius: 12px; color: var(--text-secondary);
           cursor: pointer; transition: all var(--transition-fast); text-align: left;
         }
-        .followup-btn:hover { background: #f8fafc; color: var(--accent-1); border-color: rgba(0,78,233,0.3); }
+        .followup-btn:hover { background: rgba(139,92,246,0.1); color: var(--accent-2); border-color: rgba(139,92,246,0.25); }
         
         .chat-input-bar {
           position: absolute; bottom: 0; left: 0; right: 0;
@@ -238,15 +257,15 @@ export default function ChatWindow() {
         .chat-input-wrap { 
           display: flex; gap: 8px; align-items: flex-end; 
           width: 100%; max-width: 800px; 
-          background: #ffffff;
-          border: 1px solid rgba(0,0,0,0.08);
+          background: var(--bg-elevated);
+          border: 1px solid rgba(255,255,255,0.08);
           border-radius: 20px;
           padding: 8px 8px 8px 20px;
-          box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.4);
           pointer-events: auto;
           transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
         }
-        .chat-input-wrap:focus-within { border-color: var(--accent-3); box-shadow: 0 8px 30px var(--accent-glow); }
+        .chat-input-wrap:focus-within { border-color: var(--accent-3); box-shadow: 0 8px 32px var(--accent-glow); }
         .chat-textarea {
           resize: none; min-height: 24px; max-height: 200px;
           overflow-y: auto; line-height: 1.5; padding-top: 8px; padding-bottom: 8px;
@@ -255,9 +274,14 @@ export default function ChatWindow() {
         }
         .chat-textarea:focus { box-shadow: none; }
         .chat-hint { 
-          font-size: 0.7rem; color: var(--text-muted); 
+          font-size: 0.68rem; color: var(--text-muted); 
           margin-top: 10px; text-align: center; pointer-events: auto;
-          width: 100%;
+          width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .hint-dot {
+          width: 5px; height: 5px; border-radius: 50%;
+          background: var(--success);
+          box-shadow: 0 0 6px rgba(52,211,153,0.4);
         }
         
         #send-message-btn, #cancel-stream-btn {

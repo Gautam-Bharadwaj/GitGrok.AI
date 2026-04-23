@@ -47,11 +47,13 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
         </div>
         <style jsx>{`
           .msg { display: flex; justify-content: flex-end; margin: 8px 0; }
-          .msg__bubble { padding: 10px 14px; border-radius: 18px 18px 4px 18px;
+          .msg__bubble { padding: 10px 16px; border-radius: 18px 18px 4px 18px;
             max-width: 70%; font-size: 0.875rem; line-height: 1.55; }
           .msg__bubble--user {
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-            color: #fff; }
+            background: linear-gradient(135deg, var(--accent-3), var(--accent-1));
+            color: #fff;
+            box-shadow: 0 4px 16px var(--accent-glow);
+          }
         `}</style>
       </div>
     );
@@ -60,9 +62,10 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
   return (
     <div className="msg msg--assistant animate-fadeInUp">
       <div className="msg__avatar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 8v4l3 3"/>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
         </svg>
       </div>
 
@@ -136,7 +139,7 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
       </div>
 
       <style jsx>{`
-        .msg { display: flex; gap: 16px; align-items: flex-start; padding: 16px 0; margin: 0; width: 100%; border-bottom: 1px solid rgba(0,0,0,0.04); }
+        .msg { display: flex; gap: 14px; align-items: flex-start; padding: 20px 0; margin: 0; width: 100%; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .msg--user { flex-direction: row; }
         .msg__bubble--user {
           flex: 1; padding: 0 4px; font-size: 0.95rem; line-height: 1.6; color: var(--text-primary);
@@ -144,48 +147,52 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
         
         .msg--assistant { flex-direction: row; }
         .msg__avatar {
-          width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+          width: 30px; height: 30px; border-radius: 10px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: #f1f5f9; color: var(--accent-1); border: 1px solid rgba(0,0,0,0.05);
+          background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(34,211,238,0.1));
+          color: var(--accent-2); border: 1px solid rgba(139,92,246,0.15);
+          margin-top: 2px;
         }
         .msg__body { flex: 1; min-width: 0; }
         .msg__content {
           padding: 0 4px;
-          font-size: 0.95rem; line-height: 1.6;
-          color: var(--text-primary);
+          font-size: 0.92rem; line-height: 1.7;
+          color: var(--text-secondary);
         }
         .msg__content :global(p) { margin-bottom: 1em; }
         .msg__content :global(p:last-child) { margin-bottom: 0; }
         .msg__content :global(ul), .msg__content :global(ol) { padding-left: 1.2rem; margin-bottom: 1em; }
         .msg__content :global(li) { margin-bottom: 0.25em; }
+        .msg__content :global(strong) { color: var(--text-primary); }
         .msg__content :global(.inline-code) {
           font-family: var(--font-mono); font-size: 0.85em;
-          background: rgba(0,0,0,0.05); color: var(--text-primary);
-          padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.08);
+          background: rgba(139,92,246,0.12); color: var(--accent-2);
+          padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(139,92,246,0.15);
         }
         .cursor {
           display: inline-block; width: 2px; height: 1em;
-          background: var(--text-primary); margin-left: 2px;
+          background: var(--accent-2); margin-left: 2px;
           animation: blink 0.8s step-end infinite; vertical-align: text-bottom;
+          box-shadow: 0 0 6px var(--accent-glow);
         }
         @keyframes blink { 50% { opacity: 0; } }
         .msg__tokens {
-          display: block; font-size: 0.7rem; color: var(--text-muted);
+          display: block; font-size: 0.68rem; color: var(--text-muted);
           margin-top: 10px;
         }
         .msg__followups { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
         .followup-btn {
-          font-size: 0.8rem; padding: 6px 12px;
+          font-size: 0.78rem; padding: 6px 14px;
           background: transparent;
-          border: 1px solid rgba(0,0,0,0.1);
-          border-radius: 12px; color: var(--text-secondary);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 12px; color: var(--text-muted);
           cursor: pointer; transition: all var(--transition-fast);
           white-space: nowrap;
         }
         .followup-btn:hover {
-          background: var(--bg-glass-hover);
-          color: var(--accent-1);
-          border-color: rgba(0,78,233,0.3);
+          background: rgba(139,92,246,0.1);
+          color: var(--accent-2);
+          border-color: rgba(139,92,246,0.25);
         }
       `}</style>
     </div>

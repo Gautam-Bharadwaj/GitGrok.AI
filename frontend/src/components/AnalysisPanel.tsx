@@ -209,26 +209,30 @@ export default function AnalysisPanel() {
       )}
 
       <style jsx>{`
-        .ap { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .ap { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg-surface); }
         .ap__tabs {
           display: flex; border-bottom: 1px solid rgba(255,255,255,0.06);
-          background: var(--bg-surface); flex-shrink: 0;
+          background: rgba(17,17,20,0.8); flex-shrink: 0;
+          backdrop-filter: blur(12px);
         }
         .ap__tab {
           flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 10px 8px; font-size: 0.78rem; font-weight: 500;
+          padding: 12px 8px; font-size: 0.78rem; font-weight: 500;
           background: none; border: none; color: var(--text-muted); cursor: pointer;
           transition: all var(--transition-fast);
           border-bottom: 2px solid transparent;
         }
-        .ap__tab:hover { color: var(--text-primary); }
-        .ap__tab--active { color: var(--accent-3); border-bottom-color: var(--accent-2); }
+        .ap__tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.02); }
+        .ap__tab--active { color: var(--accent-2); border-bottom-color: var(--accent-1); }
         .ap__body { flex: 1; overflow-y: auto; padding: 1rem; }
         .ap__hint { font-size: 0.8rem; color: var(--text-muted); text-align: center; }
         .bug-card {
-          padding: 10px 12px; margin-bottom: 8px;
+          padding: 12px 14px; margin-bottom: 8px;
           border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.06);
+          background: var(--bg-elevated);
+          transition: border-color var(--transition-fast);
         }
+        .bug-card:hover { border-color: rgba(139,92,246,0.2); }
         .bug-card__header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
         .bug-card__file { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
         .bug-card__desc { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
@@ -237,18 +241,20 @@ export default function AnalysisPanel() {
           padding: 1rem; border-radius: var(--radius-sm);
           font-size: 0.82rem; line-height: 1.7; color: var(--text-secondary);
           overflow-y: auto; max-height: calc(100vh - 220px);
+          background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.06);
         }
         .readme-preview :global(h1),
         .readme-preview :global(h2),
         .readme-preview :global(h3) { color: var(--text-primary); margin: 0.8em 0 0.4em; }
         .readme-preview :global(code) {
           font-family: var(--font-mono); font-size: 0.8em;
-          background: rgba(124,58,237,0.12); color: var(--accent-3);
-          padding: 1px 5px; border-radius: 3px;
+          background: rgba(139,92,246,0.12); color: var(--accent-2);
+          padding: 1px 5px; border-radius: 4px;
         }
         .readme-preview :global(pre) { overflow-x: auto; }
-        .readme-preview :global(a) { color: var(--accent-3); }
-        .readme-preview :global(hr) { border-color: rgba(255,255,255,0.08); }
+        .readme-preview :global(a) { color: var(--accent-2); text-decoration: none; }
+        .readme-preview :global(a:hover) { text-decoration: underline; }
+        .readme-preview :global(hr) { border-color: rgba(255,255,255,0.06); }
       `}</style>
     </div>
   );
