@@ -40,8 +40,8 @@ class Settings(BaseSettings):
     embedding_batch_size: int = Field(200, description="Batch size for embedding requests")
     embedding_batch_delay_ms: int = Field(0, description="Delay between embedding batches in milliseconds")
     ingestion_max_files: int = Field(3000, description="Maximum files to process during ingestion")
-    max_context_tokens: int = Field(6000, description="Token budget for LLM context")
-    top_k_retrieval: int = Field(8, description="Number of chunks to retrieve")
+    max_context_tokens: int = Field(4000, description="Token budget for LLM context")
+    top_k_retrieval: int = Field(5, description="Number of chunks to retrieve")
 
     # ── GitHub ────────────────────────────────────────────────────────────────
     github_access_token: str = Field(

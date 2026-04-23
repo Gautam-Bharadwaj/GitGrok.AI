@@ -95,6 +95,38 @@ export interface ReadmeResponse {
   markdown: string;
 }
 
+export interface LanguageStat {
+  language: string;
+  count: number;
+  percentage: number;
+}
+
+export interface ChunkTypeStat {
+  chunk_type: string;
+  count: number;
+}
+
+export interface RepoStatsResponse {
+  repo_id: string;
+  name: string;
+  file_count: number;
+  chunk_count: number;
+  total_tokens: number;
+  languages: LanguageStat[];
+  chunk_types: ChunkTypeStat[];
+  top_files: { file_path: string; chunk_count: number }[];
+  avg_chunk_size: number;
+}
+
+export interface FileNode {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  children: FileNode[];
+  chunk_count: number;
+  language: string;
+}
+
 // ── Repository API ─────────────────────────────────────────────────────────────
 
 export const repoApi = {
@@ -206,4 +238,10 @@ export const analysisApi = {
       method: "POST",
       body: JSON.stringify({ repo_id }),
     }),
+
+  stats: (repo_id: string) =>
+    apiFetch<RepoStatsResponse>(`/api/v1/analysis/stats/${repo_id}`),
+
+  files: (repo_id: string) =>
+    apiFetch<FileNode[]>(`/api/v1/analysis/files/${repo_id}`),
 };

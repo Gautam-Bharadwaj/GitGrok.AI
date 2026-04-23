@@ -35,6 +35,27 @@ export default function HomePage() {
       });
   }, [setRepos]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === "k") {
+        e.preventDefault();
+        setActiveRepo(null);
+      }
+      if (mod && e.key === "b") {
+        e.preventDefault();
+        setAnalysisOpen(!analysisOpen);
+      }
+      if (mod && e.key === "/") {
+        e.preventDefault();
+        document.getElementById("chat-input")?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [setActiveRepo, setAnalysisOpen, analysisOpen]);
+
   const handleDeleteRepo = async (id: string) => {
     try {
       await repoApi.delete(id);

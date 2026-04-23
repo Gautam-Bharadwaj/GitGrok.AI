@@ -1,5 +1,10 @@
 """
 workers/ingestion_worker.py — Celery task for background repository ingestion.
+
+OPTIMISED:
+- Priority file ordering (entry points, configs first)
+- Concurrent chunking with asyncio.gather
+- Granular progress updates
 """
 
 import asyncio
@@ -36,6 +41,30 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
+# Priority patterns — files matching these come first for faster initial indexing
+_PRIORITY_PATTERNS = {
+    "main.py", "app.py", "index.ts", "index.js", "index.tsx", "server.py",
+    "server.ts", "server.js", "routes.py", "api.py", "config.py", "settings.py",
+    "package.json", "pyproject.toml", "Cargo.toml", "go.mod",
+    "README.md", "readme.md", "Dockerfile",
+}
+
+_PRIORITY_DIRS = {"src", "app", "lib", "core", "api", "routes", "services"}
+
+
+def _priority_sort_key(path: str) -> int:
+    """Sort key: lower = higher priority. Entry points and configs first."""
+    name = Path(path).name
+    parent = Path(path).parent.name
+
+    if name in _PRIORITY_PATTERNS:
+        return 0
+    if parent in _PRIORITY_DIRS:
+        return 1
+    if name.endswith((".py", ".ts", ".tsx", ".js", ".jsx")):
+        return 2
+    return 3
+
 
 async def _update_status(repo_id: str, status: RepoStatus, **kwargs) -> None:
     """Helper to update database Repository record."""
@@ -56,10 +85,10 @@ async def _run_ingestion_task(
     task_self: Optional[Any] = None,
 ) -> None:
     """
-    Full async ingestion pipeline.
+    Full async ingestion pipeline — optimised for speed.
     """
     logger.info("[%s] Starting ingestion for: %s", repo_id, url)
-    await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=10)
+    await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=5)
 
     # ── 1. Clone ───────────────────────────────────────────────────────────────
     try:
@@ -69,24 +98,36 @@ async def _run_ingestion_task(
         await _update_status(repo_id, RepoStatus.FAILED, error_message=str(e))
         return
 
-    # ── 2. Filter files ────────────────────────────────────────────────────────
+    await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=15)
+
+    # ── 2. Filter + prioritise files ──────────────────────────────────────────
     clone_root = Path(clone_dir)
     source_files = list_source_files(clone_dir)
+    
+    # Sort by priority — important files first
+    source_files.sort(key=_priority_sort_key)
+    
     file_count = len(source_files)
-    await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=30)
+    await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=20)
 
     if file_count == 0:
         logger.warning("[%s] No source files found.", repo_id)
         await _update_status(repo_id, RepoStatus.FAILED, error_message="No readable source files found.")
         return
 
-    # ── 3. Chunk all files (Parallel) ─────────────────────────────────────────
+    logger.info("[%s] Found %d source files (priority-sorted)", repo_id, file_count)
+
+    # ── 3. Chunk all files (Parallel with concurrency limit) ──────────────────
     logger.info("[%s] Chunking %d files...", repo_id, file_count)
     
-    chunk_tasks = [
-        asyncio.to_thread(chunk_file, Path(fp), repo_id, clone_root)
-        for fp in source_files
-    ]
+    # Use a semaphore to limit concurrent file reads (avoid fd exhaustion)
+    sem = asyncio.Semaphore(32)
+    
+    async def _chunk_with_sem(fp: str) -> list:
+        async with sem:
+            return await asyncio.to_thread(chunk_file, Path(fp), repo_id, clone_root)
+    
+    chunk_tasks = [_chunk_with_sem(fp) for fp in source_files]
     results = await asyncio.gather(*chunk_tasks)
     
     all_chunks = []
@@ -94,9 +135,10 @@ async def _run_ingestion_task(
         all_chunks.extend(chunks)
 
     chunk_count = len(all_chunks)
-    await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=60)
+    await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=50)
+    logger.info("[%s] Generated %d chunks from %d files", repo_id, chunk_count, file_count)
 
-    # ── 4 & 5. Embed + FAISS index ─────────────────────────────────────────────
+    # ── 4 & 5. Embed + FAISS index (concurrent batches) ───────────────────────
     async def progress_cb(pct: int, msg: str) -> None:
         await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=pct)
         if task_self:
@@ -105,6 +147,9 @@ async def _run_ingestion_task(
     await embed_and_index(all_chunks, repo_id, progress_callback=progress_cb)
 
     # Store relative paths for the file explorer
+    # Build a list of unique file paths for the file tree
+    file_paths = sorted(set(c.file_path for c in all_chunks))
+    
     await _update_status(
         repo_id,
         RepoStatus.INDEXED,

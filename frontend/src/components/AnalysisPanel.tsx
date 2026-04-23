@@ -1,40 +1,22 @@
 "use client";
 
 /**
- * components/AnalysisPanel.tsx — Sidebar panel with Bugs, README, and Files tabs.
+ * components/AnalysisPanel.tsx — Sidebar with tabs for:
+ *   1. Stats Dashboard (file count, chunk count, languages, top files)
+ *   2. Bugs scan
+ *   3. README generator
+ *   4. File Explorer (tree view)
+ *   5. Export chat
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { analysisApi } from "@/lib/api";
-import { useChatStore, SidebarTab } from "@/store/chatStore";
+import { useChatStore } from "@/store/chatStore";
+import { analysisApi, type RepoStatsResponse, type FileNode } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
-const TABS: { id: SidebarTab; label: string; icon: React.ReactNode }[] = [
-  {
-    id: "bugs",
-    label: "Bugs",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/>
-      </svg>
-    ),
-  },
-  {
-    id: "readme",
-    label: "README",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </svg>
-    ),
-  },
-];
+type Tab = "stats" | "bugs" | "readme" | "files" | "export";
 
 export default function AnalysisPanel() {
   const activeRepoId = useChatStore((s) => s.activeRepoId);
@@ -46,186 +28,312 @@ export default function AnalysisPanel() {
   const setReadme = useChatStore((s) => s.setReadme);
   const setBugsLoading = useChatStore((s) => s.setBugsLoading);
   const setReadmeLoading = useChatStore((s) => s.setReadmeLoading);
-  const sidebarTab = useChatStore((s) => s.sidebarTab);
-  const setSidebarTab = useChatStore((s) => s.setSidebarTab);
-  const [panelError, setPanelError] = useState<string | null>(null);
-  const severityToVariant = (severity: string): "critical" | "warning" | "default" => {
-    if (severity === "CRITICAL") return "critical";
-    if (severity === "WARNING") return "warning";
-    return "default";
-  };
+  const messages = useChatStore((s) => s.messages);
 
-  const handleRunBugs = async () => {
+  const [tab, setTab] = useState<Tab>("stats");
+  const [stats, setStats] = useState<RepoStatsResponse | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [files, setFiles] = useState<FileNode[]>([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [exportCopied, setExportCopied] = useState(false);
+
+  // Load stats when tab is active and repo is selected
+  useEffect(() => {
+    if (tab === "stats" && activeRepoId && !stats) {
+      setStatsLoading(true);
+      analysisApi
+        .stats(activeRepoId)
+        .then(setStats)
+        .catch(() => {})
+        .finally(() => setStatsLoading(false));
+    }
+  }, [tab, activeRepoId, stats]);
+
+  // Load file tree when tab is active
+  useEffect(() => {
+    if (tab === "files" && activeRepoId && files.length === 0) {
+      setFilesLoading(true);
+      analysisApi
+        .files(activeRepoId)
+        .then(setFiles)
+        .catch(() => {})
+        .finally(() => setFilesLoading(false));
+    }
+  }, [tab, activeRepoId, files.length]);
+
+  // Reset on repo change
+  useEffect(() => {
+    setStats(null);
+    setFiles([]);
+  }, [activeRepoId]);
+
+  const handleBugScan = async () => {
     if (!activeRepoId || bugsLoading) return;
     setBugsLoading(true);
-    setPanelError(null);
     try {
       const res = await analysisApi.bugs(activeRepoId);
       setBugs(res.findings);
-    } catch (e: any) {
-      setPanelError(e?.message ?? "Failed to run bug scan.");
-    } finally {
-      setBugsLoading(false);
+    } catch {
+      setBugs([]);
     }
+    setBugsLoading(false);
   };
 
-  const handleGenReadme = async () => {
+  const handleReadme = async () => {
     if (!activeRepoId || readmeLoading) return;
     setReadmeLoading(true);
-    setPanelError(null);
     try {
       const res = await analysisApi.readme(activeRepoId);
       setReadme(res.markdown);
-    } catch (e: any) {
-      setPanelError(e?.message ?? "Failed to generate README.");
-    } finally {
-      setReadmeLoading(false);
-    }
-  };
-
-  const handleCopyReadme = async () => {
-    if (!readme) return;
-    try {
-      await navigator.clipboard.writeText(readme);
     } catch {
-      setPanelError("Unable to copy README. Clipboard access was denied.");
+      setReadme("Failed to generate README.");
     }
+    setReadmeLoading(false);
   };
 
-  const handleDownloadReadme = () => {
-    if (!readme) return;
-    const blob = new Blob([readme], { type: "text/markdown" });
+  const handleExport = () => {
+    const md = messages
+      .map((m) => {
+        const role = m.role === "user" ? "**You**" : "**GitGrok.AI**";
+        return `### ${role}\n${m.content}`;
+      })
+      .join("\n\n---\n\n");
+    
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "README.md";
+    a.href = url;
+    a.download = `gitgrok-chat-${new Date().toISOString().slice(0, 10)}.md`;
     a.click();
+    URL.revokeObjectURL(url);
   };
 
-  if (!activeRepoId) {
-    return (
-      <div className="analysis-empty">
-        <p>Select a repository to run analysis.</p>
-        <style jsx>{`
-          .analysis-empty {
-            padding: 2rem 1rem; color: var(--text-muted);
-            font-size: 0.82rem; text-align: center;
-          }
-        `}</style>
-      </div>
-    );
-  }
+  const handleCopyChat = () => {
+    const text = messages
+      .map((m) => `${m.role === "user" ? "You" : "GitGrok.AI"}: ${m.content}`)
+      .join("\n\n");
+    navigator.clipboard.writeText(text);
+    setExportCopied(true);
+    setTimeout(() => setExportCopied(false), 2000);
+  };
+
+  const TABS: { key: Tab; label: string; icon: string }[] = [
+    { key: "stats", label: "Stats", icon: "📊" },
+    { key: "bugs", label: "Bugs", icon: "🔍" },
+    { key: "readme", label: "README", icon: "📄" },
+    { key: "files", label: "Files", icon: "📁" },
+    { key: "export", label: "Export", icon: "💾" },
+  ];
 
   return (
     <div className="ap">
-      {/* Tab bar */}
+      {/* Tabs */}
       <div className="ap__tabs">
-        {TABS.map((tab) => (
+        {TABS.map((t) => (
           <button
-            key={tab.id}
-            id={`analysis-tab-${tab.id}`}
-            className={`ap__tab ${sidebarTab === tab.id ? "ap__tab--active" : ""}`}
-            onClick={() => setSidebarTab(tab.id)}
+            key={t.key}
+            className={`ap__tab ${tab === t.key ? "ap__tab--active" : ""}`}
+            onClick={() => setTab(t.key)}
           >
-            {tab.icon}
-            {tab.label}
+            <span>{t.icon}</span>
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Bugs tab */}
-      {sidebarTab === "bugs" && (
-        <div className="ap__body animate-fadeIn">
-          <Button
-            id="run-bugs-btn"
-            style={{ width: "100%", marginBottom: "1rem" }}
-            onClick={handleRunBugs}
-            disabled={bugsLoading}
-          >
-            {bugsLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Scanning…</> : "Scan for Bugs"}
-          </Button>
-          {panelError && <p className="ap__hint" style={{ color: "var(--error)", marginBottom: "0.75rem" }}>{panelError}</p>}
+      {/* Body */}
+      <div className="ap__body">
+        {!activeRepoId && (
+          <p className="ap__hint">Select a repo to view analysis</p>
+        )}
 
-          {bugs.length === 0 && !bugsLoading && (
-            <p className="ap__hint">Run a scan to detect security issues and logic bugs.</p>
-          )}
+        {/* ── Stats Tab ──────────────────────────────────── */}
+        {activeRepoId && tab === "stats" && (
+          <div className="animate-fadeIn">
+            {statsLoading ? (
+              <div className="ap__loading"><div className="spinner" /> Loading stats…</div>
+            ) : stats ? (
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <span className="stat-card__value">{stats.file_count}</span>
+                  <span className="stat-card__label">Files</span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-card__value">{stats.chunk_count}</span>
+                  <span className="stat-card__label">Chunks</span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-card__value">{(stats.total_tokens / 1000).toFixed(1)}K</span>
+                  <span className="stat-card__label">Tokens</span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-card__value">{stats.avg_chunk_size.toFixed(0)}</span>
+                  <span className="stat-card__label">Avg Chunk</span>
+                </div>
 
-          {bugs.map((bug, i) => (
-            <div key={i} className="bug-card glass">
-              <div className="bug-card__header">
-                <Badge variant={severityToVariant(bug.severity)}>
-                  {bug.severity}
-                </Badge>
-                <span className="bug-card__file truncate">
-                  {bug.file}:{bug.line_range}
-                </span>
+                <div className="stat-section">
+                  <h4 className="stat-section__title">Languages</h4>
+                  {stats.languages.map((l) => (
+                    <div key={l.language} className="lang-bar">
+                      <div className="lang-bar__info">
+                        <span className="lang-bar__name">{l.language}</span>
+                        <span className="lang-bar__count">{l.count} ({l.percentage}%)</span>
+                      </div>
+                      <div className="lang-bar__track">
+                        <div className="lang-bar__fill" style={{ width: `${l.percentage}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="stat-section">
+                  <h4 className="stat-section__title">Top Files</h4>
+                  {stats.top_files.map((f) => (
+                    <div key={f.file_path} className="top-file">
+                      <span className="top-file__path truncate">{f.file_path}</span>
+                      <span className="top-file__count">{f.chunk_count}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <p className="bug-card__desc">{bug.description}</p>
-              <p className="bug-card__suggestion"><strong>Suggestion:</strong> {bug.suggestion}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* README tab */}
-      {sidebarTab === "readme" && (
-        <div className="ap__body animate-fadeIn">
-          <div style={{ display: "flex", gap: 6, marginBottom: "1rem" }}>
-            <Button
-              id="gen-readme-btn"
-              style={{ flex: 1 }}
-              onClick={handleGenReadme}
-              disabled={readmeLoading}
-            >
-              {readmeLoading ? <><span className="spinner" style={{ width: 14, height: 14 }} /> Generating…</> : "Generate README"}
-            </Button>
-            {readme && (
-              <>
-                <Button id="copy-readme-btn" variant="secondary" onClick={handleCopyReadme} title="Copy">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                  </svg>
-                </Button>
-                <Button id="download-readme-btn" variant="secondary" onClick={handleDownloadReadme} title="Download">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                </Button>
-              </>
+            ) : (
+              <p className="ap__hint">No stats available</p>
             )}
           </div>
-          {panelError && <p className="ap__hint" style={{ color: "var(--error)", marginBottom: "0.75rem" }}>{panelError}</p>}
+        )}
 
-          {readme ? (
-            <div className="readme-preview glass">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{readme}</ReactMarkdown>
-            </div>
-          ) : (
-            !readmeLoading && <p className="ap__hint">Generate a professional README based on the codebase.</p>
-          )}
-        </div>
-      )}
+        {/* ── Bugs Tab ───────────────────────────────────── */}
+        {activeRepoId && tab === "bugs" && (
+          <div className="animate-fadeIn">
+            <Button
+              onClick={handleBugScan}
+              disabled={bugsLoading}
+              style={{ marginBottom: 12, width: "100%" }}
+            >
+              {bugsLoading ? <><div className="spinner" /> Scanning…</> : "🔍 Scan for Bugs"}
+            </Button>
+            {bugs.length === 0 && !bugsLoading && (
+              <p className="ap__hint">No bugs found yet. Run a scan.</p>
+            )}
+            {bugs.map((bug, idx) => (
+              <div key={idx} className="bug-card">
+                <div className="bug-card__header">
+                  <span className={`badge badge-${bug.severity.toLowerCase() === "critical" ? "critical" : bug.severity.toLowerCase() === "warning" ? "warning" : "info"}`}>
+                    {bug.severity}
+                  </span>
+                  <span className="bug-card__file">{bug.file}:{bug.line_range}</span>
+                </div>
+                <p className="bug-card__desc">{bug.description}</p>
+                <p className="bug-card__suggestion">💡 {bug.suggestion}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── README Tab ─────────────────────────────────── */}
+        {activeRepoId && tab === "readme" && (
+          <div className="animate-fadeIn">
+            <Button
+              onClick={handleReadme}
+              disabled={readmeLoading}
+              style={{ marginBottom: 12, width: "100%" }}
+            >
+              {readmeLoading ? <><div className="spinner" /> Generating…</> : "📄 Generate README"}
+            </Button>
+            {readme ? (
+              <div className="readme-preview">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{readme}</ReactMarkdown>
+              </div>
+            ) : (
+              <p className="ap__hint">Click above to auto-generate a README</p>
+            )}
+          </div>
+        )}
+
+        {/* ── Files Tab ──────────────────────────────────── */}
+        {activeRepoId && tab === "files" && (
+          <div className="animate-fadeIn">
+            {filesLoading ? (
+              <div className="ap__loading"><div className="spinner" /> Loading files…</div>
+            ) : files.length > 0 ? (
+              <div className="file-tree">
+                {files.map((node) => (
+                  <FileTreeNode key={node.path} node={node} depth={0} />
+                ))}
+              </div>
+            ) : (
+              <p className="ap__hint">No files indexed</p>
+            )}
+          </div>
+        )}
+
+        {/* ── Export Tab ─────────────────────────────────── */}
+        {activeRepoId && tab === "export" && (
+          <div className="animate-fadeIn export-section">
+            <h4 className="export-title">Export Conversation</h4>
+            <p className="export-desc">Download or copy your current chat as markdown.</p>
+            
+            <Button onClick={handleExport} style={{ width: "100%", marginBottom: 8 }}>
+              📥 Download as Markdown
+            </Button>
+            <Button variant="secondary" onClick={handleCopyChat} style={{ width: "100%" }}>
+              {exportCopied ? "✅ Copied!" : "📋 Copy to Clipboard"}
+            </Button>
+
+            {messages.length > 0 && (
+              <div className="export-stats">
+                <span>{messages.length} messages</span>
+                <span>·</span>
+                <span>{messages.filter(m => m.role === "user").length} questions</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <style jsx>{`
         .ap { display: flex; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg-surface); }
         .ap__tabs {
           display: flex; border-bottom: 1px solid rgba(255,255,255,0.06);
           background: rgba(17,17,20,0.8); flex-shrink: 0;
-          backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px); overflow-x: auto;
         }
         .ap__tab {
-          flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-          padding: 12px 8px; font-size: 0.78rem; font-weight: 500;
+          flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
+          padding: 10px 4px; font-size: 0.72rem; font-weight: 500;
           background: none; border: none; color: var(--text-muted); cursor: pointer;
           transition: all var(--transition-fast);
-          border-bottom: 2px solid transparent;
+          border-bottom: 2px solid transparent; white-space: nowrap;
         }
         .ap__tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.02); }
         .ap__tab--active { color: var(--accent-2); border-bottom-color: var(--accent-1); }
         .ap__body { flex: 1; overflow-y: auto; padding: 1rem; }
-        .ap__hint { font-size: 0.8rem; color: var(--text-muted); text-align: center; }
+        .ap__hint { font-size: 0.82rem; color: var(--text-muted); text-align: center; padding: 2rem 0; }
+        .ap__loading { display: flex; align-items: center; gap: 8px; justify-content: center; padding: 2rem 0; font-size: 0.82rem; color: var(--text-muted); }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .stat-card {
+          background: var(--bg-elevated); border: 1px solid rgba(255,255,255,0.06);
+          border-radius: var(--radius-sm); padding: 14px 12px; text-align: center;
+          transition: border-color var(--transition-fast);
+        }
+        .stat-card:hover { border-color: rgba(139,92,246,0.25); }
+        .stat-card__value { display: block; font-size: 1.4rem; font-weight: 800; color: var(--accent-2); }
+        .stat-card__label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+        .stat-section { grid-column: 1 / -1; margin-top: 8px; }
+        .stat-section__title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+        .lang-bar { margin-bottom: 6px; }
+        .lang-bar__info { display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 3px; }
+        .lang-bar__name { color: var(--text-secondary); font-weight: 500; }
+        .lang-bar__count { color: var(--text-muted); font-size: 0.72rem; }
+        .lang-bar__track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+        .lang-bar__fill { height: 100%; background: linear-gradient(90deg, var(--accent-3), var(--accent-cyan)); border-radius: 2px; transition: width 0.5s ease; }
+        .top-file { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 0.78rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .top-file__path { color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.72rem; flex: 1; min-width: 0; }
+        .top-file__count { color: var(--accent-2); font-weight: 600; flex-shrink: 0; margin-left: 8px; }
+
+        /* Bugs */
         .bug-card {
           padding: 12px 14px; margin-bottom: 8px;
           border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.06);
@@ -237,6 +345,8 @@ export default function AnalysisPanel() {
         .bug-card__file { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
         .bug-card__desc { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px; }
         .bug-card__suggestion { font-size: 0.76rem; color: var(--text-muted); }
+
+        /* README */
         .readme-preview {
           padding: 1rem; border-radius: var(--radius-sm);
           font-size: 0.82rem; line-height: 1.7; color: var(--text-secondary);
@@ -255,6 +365,60 @@ export default function AnalysisPanel() {
         .readme-preview :global(a) { color: var(--accent-2); text-decoration: none; }
         .readme-preview :global(a:hover) { text-decoration: underline; }
         .readme-preview :global(hr) { border-color: rgba(255,255,255,0.06); }
+
+        /* File tree */
+        .file-tree { font-size: 0.82rem; }
+
+        /* Export */
+        .export-section { text-align: center; padding: 1rem 0; }
+        .export-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        .export-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+        .export-stats { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); }
+      `}</style>
+    </div>
+  );
+}
+
+
+/* ── File Tree Node (recursive) ────────────────────────────────── */
+
+function FileTreeNode({ node, depth }: { node: FileNode; depth: number }) {
+  const [open, setOpen] = useState(depth < 1);
+
+  return (
+    <div>
+      <div
+        className="tree-node"
+        style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        onClick={() => node.is_dir && setOpen(!open)}
+        role={node.is_dir ? "button" : undefined}
+      >
+        <span className="tree-node__icon">
+          {node.is_dir ? (open ? "📂" : "📁") : "📄"}
+        </span>
+        <span className="tree-node__name">{node.name}</span>
+        {node.chunk_count > 0 && (
+          <span className="tree-node__count">{node.chunk_count}</span>
+        )}
+        {!node.is_dir && node.language && (
+          <span className="tree-node__lang">{node.language}</span>
+        )}
+      </div>
+      {node.is_dir && open && node.children.map((child) => (
+        <FileTreeNode key={child.path} node={child} depth={depth + 1} />
+      ))}
+      <style jsx>{`
+        .tree-node {
+          display: flex; align-items: center; gap: 6px;
+          padding: 4px 8px; cursor: pointer;
+          border-radius: 4px; transition: background var(--transition-fast);
+          font-size: 0.8rem;
+        }
+        .tree-node:hover { background: rgba(139,92,246,0.08); }
+        .tree-node__icon { font-size: 0.85rem; flex-shrink: 0; }
+        .tree-node__name { color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tree-node__count { font-size: 0.68rem; color: var(--accent-2); font-weight: 600; background: rgba(139,92,246,0.1); padding: 1px 6px; border-radius: 99px; }
+        .tree-node__lang { font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); }
       `}</style>
     </div>
   );
