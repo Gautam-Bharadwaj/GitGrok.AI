@@ -12,7 +12,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 from app.utils.token_counter import count_tokens
 
@@ -43,7 +42,7 @@ class CodeChunk:
     start_line: int
     end_line: int
     token_count: int
-    embedding: Optional[list[float]] = field(default=None, repr=False)
+    embedding: list[float] | None = field(default=None, repr=False)
 
     def metadata_dict(self) -> dict:
         """Return a serialisable dict (excludes the embedding vector)."""
@@ -102,7 +101,7 @@ def _chunk_python_ast(source: str, repo_id: str, file_path: str) -> list[CodeChu
         return []
 
     for node in ast.walk(tree):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
             continue
         # Only top-level and first-level nested nodes (avoid double-counting)
         start = node.lineno - 1
@@ -283,7 +282,6 @@ def _chunk_semantic(source: str, repo_id: str, file_path: str) -> list[CodeChunk
     Falls back to sliding window for very long sections.
     """
     chunks: list[CodeChunk] = []
-    sections = _HEADING_RE.split(source)
     heading_positions = [m.start() for m in _HEADING_RE.finditer(source)]
 
     # Unshift prefix content before first heading

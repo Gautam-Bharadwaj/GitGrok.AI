@@ -7,7 +7,6 @@ can be passed directly to the chat completions API.
 
 from typing import Any
 
-
 # ── System prompts ────────────────────────────────────────────────────────────
 
 BASE_SYSTEM = """You are an expert code analyst assistant. You have been given \

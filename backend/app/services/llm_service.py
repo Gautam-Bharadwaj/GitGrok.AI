@@ -3,10 +3,10 @@ services/llm_service.py — Streaming and non-streaming LLM calls via OpenAI,
 with specialised handlers for different query intents.
 """
 
-import json
 import logging
 import re
-from typing import Optional, Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 from openai import AsyncOpenAI
 

@@ -11,7 +11,7 @@ L3 – File summaries (DB):             Stored by the chat message record.
 import hashlib
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as aioredis
 
@@ -35,7 +35,7 @@ def _query_cache_key(repo_id: str, question: str) -> str:
     return f"query:{digest}"
 
 
-async def get_cached_answer(repo_id: str, question: str) -> Optional[dict[str, Any]]:
+async def get_cached_answer(repo_id: str, question: str) -> dict[str, Any] | None:
     """
     Return a cached answer dict if one exists, else None.
 
@@ -89,7 +89,7 @@ async def set_repo_status_cache(repo_id: str, status: dict[str, Any]) -> None:
         logger.warning("Redis repo status cache failed: %s", exc)
 
 
-async def get_repo_status_cache(repo_id: str) -> Optional[dict[str, Any]]:
+async def get_repo_status_cache(repo_id: str) -> dict[str, Any] | None:
     """Return cached repo status if available."""
     try:
         r = _redis_client()
@@ -105,7 +105,7 @@ async def invalidate_repo_cache(repo_id: str) -> None:
     """Remove all cached data associated with *repo_id* (pattern delete)."""
     try:
         r = _redis_client()
-        pattern = f"query:*"
+        pattern = "query:*"
         cursor = 0
         to_delete = [f"repo_status:{repo_id}"]
         # NOTE: SCAN for query keys is O(N) — acceptable since cache is invalidated

@@ -7,7 +7,6 @@ Usage:
 """
 
 import argparse
-import sys
 
 import uvicorn
 

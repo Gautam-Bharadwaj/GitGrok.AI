@@ -4,13 +4,13 @@ per-query file-relevance boosting.
 """
 
 import logging
-from typing import Optional, Any
+from typing import Any
 
-import numpy as np
 import faiss
+import numpy as np
 
 from app.config import get_settings
-from app.services.embedding_service import load_index, embed_query
+from app.services.embedding_service import embed_query, load_index
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -72,7 +72,7 @@ def _mentions_file(query: str, meta: dict) -> bool:
 async def retrieve(
     query: str,
     repo_id: str,
-    top_k: Optional[int] = None,
+    top_k: int | None = None,
 ) -> list[dict[str, Any]]:
     """
     Full retrieval pipeline:
@@ -99,9 +99,7 @@ async def retrieve(
         logger.warning("Empty FAISS index for repo %s", repo_id)
         return []
 
-    if settings.openai_api_key == "your_openai_api_key_here":
-        logger.warning("Using placeholder OpenAI key, bypassing retrieval to prevent AuthenticationError")
-        return metadata[:top_k]
+
 
     query_vec = await embed_query(query)
 
@@ -147,7 +145,7 @@ def _reconstruct_vecs(index: faiss.Index, indices: list[int]) -> np.ndarray:
 
 def build_context(
     chunks: list[dict[str, Any]],
-    max_tokens: Optional[int] = None,
+    max_tokens: int | None = None,
 ) -> str:
     """
     Build a formatted context string from retrieved chunks, respecting the

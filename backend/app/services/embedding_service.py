@@ -13,8 +13,8 @@ import pickle
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import faiss
+import numpy as np
 from openai import AsyncOpenAI
 
 from app.config import get_settings
@@ -155,6 +155,11 @@ async def embed_and_index(
     }
 
 async def embed_query(query: str) -> np.ndarray:
+    if _use_local_embedding_fallback():
+        vec = np.array(_local_embedding(query), dtype=np.float32).reshape(1, -1)
+        faiss.normalize_L2(vec)
+        return vec
+
     client = _get_client()
     response = await client.embeddings.create(
         model=settings.embedding_model,

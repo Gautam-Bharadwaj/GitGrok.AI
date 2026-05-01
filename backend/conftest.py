@@ -8,8 +8,6 @@ variables so that Settings() can be constructed without a real .env file.
 import os
 import sys
 
-import pytest
-
 # ── Ensure the backend package is importable ──────────────────────────────────
 # When running pytest from backend/, the app package must be on sys.path.
 sys.path.insert(0, os.path.dirname(__file__))

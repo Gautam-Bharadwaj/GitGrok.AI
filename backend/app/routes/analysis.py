@@ -8,18 +8,17 @@ GET  /api/v1/analysis/files/{repo_id}  — File tree for indexed repo
 """
 
 import logging
-import re
 import pickle
+import re
 from collections import Counter
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.config import get_settings
+from app.database import get_db
 from app.models.repo import Repository, RepoStatus
 from app.services.llm_service import get_answer, handle_bug_detection, handle_readme_generation
 from app.services.retrieval_service import retrieve
@@ -33,7 +32,7 @@ settings = get_settings()
 
 class BugsRequest(BaseModel):
     repo_id: str
-    file_path: Optional[str] = Field(None, description="Limit scan to a specific file")
+    file_path: str | None = Field(None, description="Limit scan to a specific file")
 
 
 class BugFinding(BaseModel):
@@ -141,7 +140,7 @@ def _parse_bug_findings(raw: str) -> list[BugFinding]:
 def _build_file_tree(file_paths: list[str], chunk_counts: dict[str, int], languages: dict[str, str]) -> list[FileNode]:
     """Build a nested file tree from flat file paths."""
     root: dict = {}
-    
+
     for fp in sorted(file_paths):
         parts = fp.split("/")
         current = root
@@ -149,7 +148,7 @@ def _build_file_tree(file_paths: list[str], chunk_counts: dict[str, int], langua
             if part not in current:
                 current[part] = {}
             current = current[part]
-    
+
     def _build_nodes(tree: dict, prefix: str = "") -> list[FileNode]:
         nodes = []
         for name, children in sorted(tree.items()):
@@ -176,7 +175,7 @@ def _build_file_tree(file_paths: list[str], chunk_counts: dict[str, int], langua
         # Sort: directories first, then files
         nodes.sort(key=lambda n: (0 if n.is_dir else 1, n.name.lower()))
         return nodes
-    
+
     return _build_nodes(root)
 
 
@@ -338,7 +337,7 @@ async def get_file_tree(
     with open(meta_path, "rb") as fh:
         metadata: list[dict] = pickle.load(fh)
 
-    file_paths = sorted(set(m.get("file_path", "") for m in metadata if m.get("file_path")))
+    file_paths = sorted({m.get("file_path", "") for m in metadata if m.get("file_path")})
     chunk_counts = Counter(m.get("file_path", "") for m in metadata)
     languages = {}
     for m in metadata:

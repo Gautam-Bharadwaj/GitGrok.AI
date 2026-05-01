@@ -43,10 +43,10 @@ def clone_repo(url: str, repo_id: str, access_token: str = "") -> str:
     repo_name = _extract_repo_name(url)
 
     logger.info("[%s] Cloning %s...", repo_id, repo_name)
-    
+
     import subprocess
     cmd = ["git", "clone", "--depth=1", "--single-branch", "--no-tags", clone_url, str(clone_dir)]
-    
+
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         logger.error("[%s] Clone failed: %s", repo_id, result.stderr)

@@ -1,4 +1,4 @@
-from typing import Optional
+
 """
 models/repo.py — ORM model for repository ingestion records.
 """
@@ -37,8 +37,8 @@ class Repository(Base):
     progress_percent: Mapped[int] = mapped_column(Integer, default=0)
     file_count: Mapped[int] = mapped_column(Integer, default=0)
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
-    error_message: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
-    indexed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

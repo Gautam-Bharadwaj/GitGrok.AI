@@ -10,7 +10,6 @@ import pytest
 
 from app.services.retrieval_service import _mmr, build_context, retrieve
 
-
 REPO_ID = "test-repo-ret-001"
 DIM = 1536
 

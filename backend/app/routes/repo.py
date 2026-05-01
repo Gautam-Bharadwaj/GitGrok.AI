@@ -7,25 +7,24 @@ GET    /api/v1/repo/list          — List all indexed repos
 DELETE /api/v1/repo/{id}          — Delete repo + index + chat history
 """
 
+import asyncio
 import logging
 import re
 import uuid
-import asyncio
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.config import get_settings
+from app.database import get_db
 from app.models.chat import ChatMessage, ChatSession
 from app.models.repo import Repository, RepoStatus
 from app.services.cache_service import invalidate_repo_cache
 from app.services.embedding_service import delete_index
-from app.workers.ingestion_worker import ingest_repository, _run_ingestion_task
+from app.workers.ingestion_worker import _run_ingestion_task, ingest_repository
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/repo", tags=["Repository"])
@@ -37,7 +36,7 @@ settings = get_settings()
 
 class LoadRepoRequest(BaseModel):
     url: str = Field(..., description="GitHub HTTPS or SSH URL")
-    access_token: Optional[str] = Field(None, description="GitHub PAT for private repos")
+    access_token: str | None = Field(None, description="GitHub PAT for private repos")
 
 
 class LoadRepoResponse(BaseModel):
@@ -51,8 +50,8 @@ class RepoStatusResponse(BaseModel):
     progress_percent: int
     file_count: int
     chunk_count: int
-    error_message: Optional[str]
-    indexed_at: Optional[datetime]
+    error_message: str | None
+    indexed_at: datetime | None
 
 
 class RepoSummary(BaseModel):
@@ -61,7 +60,7 @@ class RepoSummary(BaseModel):
     url: str
     status: RepoStatus
     chunk_count: int
-    indexed_at: Optional[datetime]
+    indexed_at: datetime | None
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────

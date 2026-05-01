@@ -6,9 +6,8 @@ No hardcoded secrets — production-safe by design.
 """
 
 from functools import lru_cache
-from typing import List
 
-from pydantic import AnyHttpUrl, Field, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,10 +23,10 @@ class Settings(BaseSettings):
 
     # ── LLM Providers ────────────────────────────────────────────────────────
     llm_provider: str = Field("openai", description="LLM provider: openai | groq | ollama")
-    
+
     openai_api_key: str = Field(..., description="OpenAI API key (required for RAM-efficient embeddings)")
     openai_model: str = Field("gpt-4o-mini", description="OpenAI chat model")
-    
+
     groq_api_key: str = Field("", description="Groq API key")
     groq_model: str = Field("llama-3.3-70b-versatile", description="Groq chat model")
 
@@ -66,7 +65,7 @@ class Settings(BaseSettings):
 
     # ── App ───────────────────────────────────────────────────────────────────
     secret_key: str = Field(..., description="App secret key")
-    cors_origins: List[str] = Field(
+    cors_origins: list[str] = Field(
         default=["http://localhost:3000"],
         description="Allowed CORS origins",
     )
@@ -80,7 +79,7 @@ class Settings(BaseSettings):
 
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v: object) -> List[str]:
+    def parse_cors_origins(cls, v: object) -> list[str]:
         """Allow CORS_ORIGINS to be a comma-separated string or a JSON list."""
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]

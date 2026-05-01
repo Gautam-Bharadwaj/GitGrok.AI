@@ -6,13 +6,11 @@ from pathlib import Path
 import pytest
 
 from app.services.chunking_service import (
-    CodeChunk,
     _chunk_python_ast,
-    _chunk_sliding_window,
     _chunk_semantic,
+    _chunk_sliding_window,
     chunk_file,
 )
-
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 

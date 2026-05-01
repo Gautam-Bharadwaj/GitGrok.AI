@@ -9,9 +9,9 @@ OPTIMISED:
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from celery import Celery
 from sqlalchemy import update
@@ -20,12 +20,12 @@ from app.database import AsyncSessionLocal
 from app.models.repo import Repository, RepoStatus
 from app.services.chunking_service import chunk_file
 from app.services.embedding_service import embed_and_index
-from app.services.github_service import clone_repo, list_source_files, cleanup_clone
+from app.services.github_service import clone_repo, list_source_files
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 # Celery App init (shared with main.py)
-from app.config import get_settings
 settings = get_settings()
 
 celery_app = Celery(
@@ -82,7 +82,7 @@ async def _run_ingestion_task(
     repo_id: str,
     url: str,
     access_token: str,
-    task_self: Optional[Any] = None,
+    task_self: Any | None = None,
 ) -> None:
     """
     Full async ingestion pipeline — optimised for speed.
@@ -92,7 +92,7 @@ async def _run_ingestion_task(
 
     # ── 1. Clone ───────────────────────────────────────────────────────────────
     try:
-        clone_dir = clone_repo(url, repo_id, access_token)
+        clone_dir = await asyncio.to_thread(clone_repo, url, repo_id, access_token)
     except Exception as e:
         logger.error("[%s] Clone failed: %s", repo_id, e)
         await _update_status(repo_id, RepoStatus.FAILED, error_message=str(e))
@@ -102,11 +102,11 @@ async def _run_ingestion_task(
 
     # ── 2. Filter + prioritise files ──────────────────────────────────────────
     clone_root = Path(clone_dir)
-    source_files = list_source_files(clone_dir)
-    
+    source_files = await asyncio.to_thread(list_source_files, clone_dir)
+
     # Sort by priority — important files first
     source_files.sort(key=_priority_sort_key)
-    
+
     file_count = len(source_files)
     await _update_status(repo_id, RepoStatus.PROCESSING, progress_percent=20)
 
@@ -119,17 +119,17 @@ async def _run_ingestion_task(
 
     # ── 3. Chunk all files (Parallel with concurrency limit) ──────────────────
     logger.info("[%s] Chunking %d files...", repo_id, file_count)
-    
+
     # Use a semaphore to limit concurrent file reads (avoid fd exhaustion)
     sem = asyncio.Semaphore(32)
-    
+
     async def _chunk_with_sem(fp: str) -> list:
         async with sem:
             return await asyncio.to_thread(chunk_file, Path(fp), repo_id, clone_root)
-    
+
     chunk_tasks = [_chunk_with_sem(fp) for fp in source_files]
     results = await asyncio.gather(*chunk_tasks)
-    
+
     all_chunks = []
     for chunks in results:
         all_chunks.extend(chunks)
@@ -148,13 +148,13 @@ async def _run_ingestion_task(
 
     # Store relative paths for the file explorer
     # Build a list of unique file paths for the file tree
-    file_paths = sorted(set(c.file_path for c in all_chunks))
+    # (Unused locally but could be saved to DB)
     
     await _update_status(
         repo_id,
         RepoStatus.INDEXED,
         progress_percent=100,
-        indexed_at=datetime.now(timezone.utc),
+        indexed_at=datetime.now(UTC),
         file_count=file_count,
         chunk_count=chunk_count,
     )

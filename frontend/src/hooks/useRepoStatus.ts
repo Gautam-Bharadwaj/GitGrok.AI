@@ -31,8 +31,9 @@ export function useRepoStatus(repoId: string | null) {
           const detail: RepoStatusDetail = await repoApi.status(id);
           setRepoStatus(id, detail);
 
-          // Sync minimal summary into repos list
-          const existing = repos.find((r) => r.repo_id === id);
+          // Sync minimal summary into repos list using fresh state
+          const currentRepos = useChatStore.getState().repos;
+          const existing = currentRepos.find((r) => r.repo_id === id);
           upsertRepo({
             repo_id: id,
             name: existing?.name ?? id,
@@ -44,13 +45,16 @@ export function useRepoStatus(repoId: string | null) {
 
           if (detail.status === "INDEXED" || detail.status === "FAILED") {
             stopPolling();
+            if (detail.status === "INDEXED" && !useChatStore.getState().activeRepoId) {
+              useChatStore.getState().setActiveRepo(id);
+            }
           }
         } catch {
           stopPolling();
         }
       }, POLL_INTERVAL_MS);
     },
-    [repos, setRepoStatus, stopPolling, upsertRepo]
+    [setRepoStatus, stopPolling, upsertRepo]
   );
 
   useEffect(() => {

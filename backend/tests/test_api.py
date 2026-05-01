@@ -1,12 +1,7 @@
 """tests/test_api.py — Integration tests for all FastAPI endpoints."""
 
-import json
-import pickle
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import faiss
-import numpy as np
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient

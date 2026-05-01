@@ -1,9 +1,12 @@
 # ruff.toml — Linting + formatting config for the backend
-[tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = [
+    "tmp",
+    ".venv"
+]
 
-[tool.ruff.lint]
+[lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -19,5 +22,5 @@ ignore = [
     "N803",  # Argument name should be lowercase (some LangChain compat)
 ]
 
-[tool.ruff.lint.isort]
+[lint.isort]
 known-first-party = ["app"]

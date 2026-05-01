@@ -8,7 +8,7 @@ GET  /api/v1/chat/history/{sid}   — Retrieve message history for a session
 import json
 import logging
 import uuid
-from typing import AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api/v1/chat", tags=["Chat"])
 
 class AskRequest(BaseModel):
     repo_id: str = Field(..., description="Target repository UUID")
-    session_id: Optional[str] = Field(None, description="Existing session UUID or None to create")
+    session_id: str | None = Field(None, description="Existing session UUID or None to create")
     question: str = Field(..., min_length=3, max_length=2000)
     stream: bool = Field(True, description="Stream token-by-token via SSE")
 
@@ -39,8 +39,8 @@ class MessageOut(BaseModel):
     id: str
     role: str
     content: str
-    sources: Optional[list[dict]]
-    tokens_used: Optional[int]
+    sources: list[dict] | None
+    tokens_used: int | None
     created_at: str
 
 
@@ -53,7 +53,7 @@ class HistoryResponse(BaseModel):
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 async def _get_or_create_session(
-    repo_id: str, session_id: Optional[str], db: AsyncSession
+    repo_id: str, session_id: str | None, db: AsyncSession
 ) -> ChatSession:
     """Fetch an existing session or create a new one for the repo."""
     if session_id:
@@ -75,7 +75,7 @@ async def _persist_messages(
     question: str,
     answer: str,
     sources: list[dict],
-    tokens_used: Optional[int],
+    tokens_used: int | None,
     db: AsyncSession,
 ) -> None:
     """Write the user question and assistant answer to the DB."""
