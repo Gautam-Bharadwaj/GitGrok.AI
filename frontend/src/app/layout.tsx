@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "GitGrok.AI — AI-Powered Code Intelligence",
+  title: "GitGrok.AI",
   description:
     "Ask any question about your GitHub repository. Powered by GPT-4o + FAISS semantic search.",
   keywords: ["RAG", "code assistant", "AI", "GitHub", "code search", "GPT-4"],
