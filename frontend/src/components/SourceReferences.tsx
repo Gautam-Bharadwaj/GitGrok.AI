@@ -10,6 +10,7 @@
 import { useState } from "react";
 import type { Source } from "@/lib/api";
 import CodeSnippet from "./CodeSnippet";
+import { useChatStore } from "@/store/chatStore";
 
 interface Props {
   sources: Source[];
@@ -18,6 +19,7 @@ interface Props {
 export default function SourceReferences({ sources }: Props) {
   const [open, setOpen] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const setSelectedSource = useChatStore((s) => s.setSelectedSource);
 
   if (!sources || sources.length === 0) return null;
 
@@ -66,10 +68,20 @@ export default function SourceReferences({ sources }: Props) {
                     marginLeft: "auto", flexShrink: 0,
                     transform: expandedIdx === i ? "rotate(180deg)" : "rotate(0deg)",
                     transition: "transform 0.2s",
+                    marginRight: "8px"
                   }}
                 >
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
+                <button 
+                  className="btn-view-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedSource(src);
+                  }}
+                >
+                  View Full File
+                </button>
               </button>
               {expandedIdx === i && (
                 <div className="source-item__snippet animate-fadeIn">
@@ -120,6 +132,19 @@ export default function SourceReferences({ sources }: Props) {
           border-radius: 99px; white-space: nowrap;
         }
         .source-item__snippet { border-top: 1px solid rgba(255,255,255,0.06); }
+        .btn-view-full {
+          font-size: 0.65rem;
+          background: var(--primary);
+          color: #000;
+          border: none;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-weight: 600;
+          cursor: pointer;
+          opacity: 0.8;
+          transition: opacity 0.2s;
+        }
+        .btn-view-full:hover { opacity: 1; }
       `}</style>
     </div>
   );

@@ -314,4 +314,13 @@ export const analysisApi = {
     }
     return apiFetch<FileNode[]>(`/api/v1/analysis/files/${repo_id}`);
   },
+  
+  read: async (repo_id: string, file_path: string) => {
+    if (repo_id === DEMO_REPO_ID) {
+      return new Promise<{ content: string }>((resolve) => setTimeout(() => resolve({ 
+        content: `/**\n * ${file_path} (Demo Mode)\n */\n\nfunction demo() {\n  console.log("This is a simulated full file content for ${file_path}");\n  // In production, this would be the actual file from your repo.\n}\n\n${"// Line ".repeat(20).split(" ").join("\n")}`
+      }), 300));
+    }
+    return apiFetch<{ content: string }>(`/api/v1/analysis/read?repo_id=${repo_id}&file_path=${encodeURIComponent(file_path)}`);
+  },
 };

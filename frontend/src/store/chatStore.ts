@@ -6,7 +6,6 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import type {
   BugFinding,
-  ChatMessage,
   RepoStatusDetail,
   RepoSummary,
   Source,
@@ -47,6 +46,7 @@ interface ChatState {
   // UI
   sidebarTab: SidebarTab;
   analysisOpen: boolean;
+  selectedSource: Source | null;
 
   // Actions
   setRepos: (repos: RepoSummary[]) => void;
@@ -70,6 +70,7 @@ interface ChatState {
 
   setSidebarTab: (tab: SidebarTab) => void;
   setAnalysisOpen: (open: boolean) => void;
+  setSelectedSource: (src: Source | null) => void;
 }
 
 // ── Store ─────────────────────────────────────────────────────────────────────
@@ -89,6 +90,7 @@ export const useChatStore = create<ChatState>()(
     readmeLoading: false,
     sidebarTab: "repos",
     analysisOpen: false,
+    selectedSource: null,
 
     setRepos: (repos) => set((s) => { s.repos = repos; }),
     upsertRepo: (repo) =>
@@ -135,5 +137,6 @@ export const useChatStore = create<ChatState>()(
 
     setSidebarTab: (tab) => set((s) => { s.sidebarTab = tab; }),
     setAnalysisOpen: (open) => set((s) => { s.analysisOpen = open; }),
+    setSelectedSource: (src) => set((s) => { s.selectedSource = src; }),
   }))
 );

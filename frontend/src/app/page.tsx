@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import RepoLoader from "@/components/RepoLoader";
 import ChatWindow from "@/components/ChatWindow";
 import AnalysisPanel from "@/components/AnalysisPanel";
+import FileViewerModal from "@/components/FileViewerModal";
 import { useChatStore } from "@/store/chatStore";
 import { repoApi } from "@/lib/api";
 
@@ -292,7 +293,7 @@ export default function HomePage() {
                 <h2>Step 4: Ask AI Assistant</h2>
                 <p>Query your repository knowledge base in real-time.</p>
               </div>
-              <div className="chat-wrapper" style={{ height: "600px", position: "relative" }}>
+              <div className="chat-wrapper" style={{ height: "600px" }}>
                  <ChatWindow />
               </div>
             </section>
@@ -300,6 +301,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+      <FileViewerModal />
     </div>
   );
 }

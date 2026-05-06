@@ -44,7 +44,7 @@ export default function ChatWindow() {
 
   return (
     <>
-      <div className="chat-messages" id="chat-messages" style={{ overflowY: 'auto', height: 'calc(100% - 74px)' }}>
+      <div className="chat-messages" id="chat-messages">
         {(!activeRepoId || messages.length === 0) && (
           <div className="message assistant">
             <div className="message-content">
@@ -66,7 +66,7 @@ export default function ChatWindow() {
         <div ref={bottomRef} style={{ height: 1 }} />
       </div>
 
-      <div className="chat-input-container" style={{ position: 'absolute', bottom: 0, width: '100%', borderRadius: '0 0 var(--radius-xl) var(--radius-xl)' }}>
+      <div className="chat-input-container">
         <div className="quick-recommendations" id="recommendations-container" style={{ display: "none" }}></div>
         <div className="input-box">
           <input
