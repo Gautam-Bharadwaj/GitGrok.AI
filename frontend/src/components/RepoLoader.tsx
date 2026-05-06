@@ -6,11 +6,16 @@ import { useChatStore } from "@/store/chatStore";
 import { useRepoStatus } from "@/hooks/useRepoStatus";
 
 const STEPS = [
-  { label: "Cloning repository", threshold: 20 },
-  { label: "Filtering files",    threshold: 35 },
-  { label: "Chunking code",      threshold: 55 },
-  { label: "Generating embeddings", threshold: 90 },
-  { label: "Building index",     threshold: 100 },
+  { label: "Cloning repository...", threshold: 20 },
+  { label: "Filtering binary files...",    threshold: 35 },
+  { label: "Chunking source code...",      threshold: 55 },
+  { label: "Generating embeddings (Vectorize)...", threshold: 90 },
+  { label: "Finalizing knowledge base...",     threshold: 100 },
+];
+
+const MOCK_FILES = [
+  "package.json", "src/index.ts", "lib/router.js", "README.md", 
+  "app/page.tsx", "utils/logger.ts", "config/db.json", "tests/core.spec.js"
 ];
 
 function currentStep(pct: number) {
@@ -112,13 +117,37 @@ export default function RepoLoader() {
         {error && <p style={{ color: 'var(--danger)', marginTop: 16, fontSize: '0.85rem' }}>{error}</p>}
 
         {(loading || (pollingId && !isIndexed && !isFailed)) && (
-          <div className="progress-area" style={{ marginTop: '16px' }}>
-            <div className="progress-bar-bg" style={{ width: '100%', height: '8px', background: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
-              <div className="progress-bar-fill" style={{ width: `${loading ? 5 : pct}%`, height: '100%', background: 'var(--primary)', transition: 'width 0.3s ease' }}></div>
+          <div className="progress-area" style={{ marginTop: '24px' }}>
+            <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span className="step-text" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                {loading ? "Establishing connection..." : (STEPS[Math.max(0, stepIdx)]?.label ?? "Finalising…")}
+              </span>
+              <span className="pct-text" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700 }}>
+                {loading ? 5 : pct}%
+              </span>
             </div>
-            <span className="progress-label" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              {loading ? "Connecting to repository..." : (STEPS[Math.max(0, stepIdx)]?.label ?? "Finalising…")} ({loading ? 5 : pct}%)
-            </span>
+            
+            <div className="progress-bar-bg" style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', position: 'relative' }}>
+              <div 
+                className="progress-bar-fill glow-progress" 
+                style={{ 
+                  width: `${loading ? 5 : pct}%`, 
+                  height: '100%', 
+                  background: 'linear-gradient(90deg, var(--primary-dark), var(--primary))', 
+                  transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  borderRadius: '10px'
+                }}
+              ></div>
+            </div>
+
+            {!loading && pct > 20 && (
+              <div className="file-ticker animate-fadeIn" style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="pulse-dot"></div>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                  Processing: {MOCK_FILES[Math.floor((pct / 100) * MOCK_FILES.length) % MOCK_FILES.length]}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

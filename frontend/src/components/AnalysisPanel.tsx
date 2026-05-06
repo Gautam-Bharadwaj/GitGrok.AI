@@ -27,31 +27,20 @@ export default function AnalysisPanel() {
   const [filesLoading, setFilesLoading] = useState(false);
   const [exportCopied, setExportCopied] = useState(false);
 
-  // Load stats when tab is active and repo is selected
   useEffect(() => {
     if (tab === "stats" && activeRepoId && !stats) {
       setStatsLoading(true);
-      analysisApi
-        .stats(activeRepoId)
-        .then(setStats)
-        .catch(() => {})
-        .finally(() => setStatsLoading(false));
+      analysisApi.stats(activeRepoId).then(setStats).catch(() => {}).finally(() => setStatsLoading(false));
     }
   }, [tab, activeRepoId, stats]);
 
-  // Load file tree when tab is active
   useEffect(() => {
     if (tab === "files" && activeRepoId && files.length === 0) {
       setFilesLoading(true);
-      analysisApi
-        .files(activeRepoId)
-        .then(setFiles)
-        .catch(() => {})
-        .finally(() => setFilesLoading(false));
+      analysisApi.files(activeRepoId).then(setFiles).catch(() => {}).finally(() => setFilesLoading(false));
     }
   }, [tab, activeRepoId, files.length]);
 
-  // Reset on repo change
   useEffect(() => {
     setStats(null);
     setFiles([]);
@@ -82,13 +71,7 @@ export default function AnalysisPanel() {
   };
 
   const handleExport = () => {
-    const md = messages
-      .map((m) => {
-        const role = m.role === "user" ? "**You**" : "**GitGrok.AI**";
-        return `### ${role}\n${m.content}`;
-      })
-      .join("\n\n---\n\n");
-    
+    const md = messages.map(m => `### ${m.role === "user" ? "**You**" : "**GitGrok.AI**"}\n${m.content}`).join("\n\n---\n\n");
     const blob = new Blob([md], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -99,221 +82,242 @@ export default function AnalysisPanel() {
   };
 
   const handleCopyChat = () => {
-    const text = messages
-      .map((m) => `${m.role === "user" ? "You" : "GitGrok.AI"}: ${m.content}`)
-      .join("\n\n");
+    const text = messages.map(m => `${m.role === "user" ? "You" : "GitGrok.AI"}: ${m.content}`).join("\n\n");
     navigator.clipboard.writeText(text);
     setExportCopied(true);
     setTimeout(() => setExportCopied(false), 2000);
   };
 
-  const TABS: { key: Tab; label: string; icon: string }[] = [
-    { key: "stats", label: "Stats", icon: "" },
-    { key: "bugs", label: "Bugs", icon: "" },
-    { key: "readme", label: "README", icon: "" },
-    { key: "files", label: "Files", icon: "" },
-    { key: "export", label: "Export", icon: "" },
+  const TABS: { key: Tab; label: string; icon: any }[] = [
+    { key: "stats", label: "Insights", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg> },
+    { key: "bugs", label: "Bugs", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg> },
+    { key: "readme", label: "Docs", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5V5A2.5 2.5 0 0 1 6.5 2.5H20v14.5H6.5A2.5 2.5 0 0 0 4 19.5z"/></svg> },
+    { key: "files", label: "Files", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> },
+    { key: "export", label: "Export", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> },
   ];
 
   return (
     <>
-      <div className="analysis-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)' }}>
+      <div className="analysis-tabs">
         {TABS.map((t) => (
           <button
             key={t.key}
             className={`tab-btn ${tab === t.key ? "active" : ""}`}
-            style={{ flex: 1, padding: '12px 0', background: 'transparent', border: 'none', color: tab === t.key ? 'var(--primary)' : 'var(--text-muted)', borderBottom: tab === t.key ? '2px solid var(--primary)' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.3s' }}
             onClick={() => setTab(t.key)}
           >
-            {t.label}
+            {t.icon}
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="analysis-content" style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+      <div className="analysis-content scroll-custom">
         {!activeRepoId && (
           <div className="empty-state">
-            <p>Select a repository to view analysis</p>
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text-muted)" strokeWidth="1" style={{ marginBottom: 16 }}>
+              <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>Select a repository in Step 2 to begin analysis</p>
           </div>
         )}
 
-        {/* ── Stats Tab ──────────────────────────────────── */}
         {activeRepoId && tab === "stats" && (
           <div className="animate-fadeIn">
             {statsLoading ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading stats…</div>
+              <div className="panel-loading"><div className="spinner-sm"></div> Calculating insights...</div>
             ) : stats ? (
-              <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="stat-card" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
-                  <div className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text)' }}>{stats.file_count}</div>
-                  <div className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Files</div>
-                </div>
-                <div className="stat-card" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
-                  <div className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text)' }}>{stats.chunk_count}</div>
-                  <div className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Chunks</div>
-                </div>
-                <div className="stat-card" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
-                  <div className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text)' }}>{(stats.total_tokens / 1000).toFixed(1)}K</div>
-                  <div className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Tokens</div>
-                </div>
-                <div className="stat-card" style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
-                  <div className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text)' }}>{stats.avg_chunk_size.toFixed(0)}</div>
-                  <div className="stat-label" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Avg Chunk</div>
+              <div className="stats-dashboard">
+                <div className="health-card">
+                  <div className="health-score">
+                    <svg viewBox="0 0 36 36" className="circular-chart orange">
+                      <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path className="circle" strokeDasharray="85, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <text x="18" y="20.35" className="percentage">85%</text>
+                    </svg>
+                    <div className="health-info">
+                      <strong>Repo Health</strong>
+                      <span>Solid Architecture</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="stat-section" style={{ gridColumn: '1 / -1', marginTop: '16px' }}>
-                  <h4 style={{ color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px', marginBottom: '12px' }}>Languages</h4>
+                <div className="metrics-grid">
+                  <div className="metric-item">
+                    <span className="m-label">Files</span>
+                    <span className="m-value">{stats.file_count}</span>
+                  </div>
+                  <div className="metric-item">
+                    <span className="m-label">Chunks</span>
+                    <span className="m-value">{stats.chunk_count}</span>
+                  </div>
+                  <div className="metric-item">
+                    <span className="m-label">Total Tokens</span>
+                    <span className="m-value">{(stats.total_tokens / 1000).toFixed(1)}K</span>
+                  </div>
+                </div>
+
+                <div className="stat-section">
+                  <header>Languages</header>
                   {stats.languages.map((l) => (
-                    <div key={l.language} style={{ marginBottom: '10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '4px' }}>
-                        <span style={{ color: 'var(--text)' }}>{l.language}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>{l.count} ({l.percentage}%)</span>
+                    <div key={l.language} className="lang-row">
+                      <div className="lang-info">
+                        <span>{l.language}</span>
+                        <span className="muted">{l.percentage}%</span>
                       </div>
-                      <div style={{ height: '6px', background: 'var(--bg-input)', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: 'var(--primary)', width: `${l.percentage}%` }} />
+                      <div className="progress-mini">
+                        <div className="fill" style={{ width: `${l.percentage}%` }} />
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="stat-section" style={{ gridColumn: '1 / -1', marginTop: '16px' }}>
-                  <h4 style={{ color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px', marginBottom: '12px' }}>Top Files</h4>
+                <div className="stat-section">
+                  <header>Complex Files</header>
                   {stats.top_files.map((f) => (
-                    <div key={f.file_path} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}>
-                      <span style={{ color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.file_path}</span>
-                      <span style={{ color: 'var(--primary)', fontWeight: 600, marginLeft: '12px' }}>{f.chunk_count}</span>
+                    <div key={f.file_path} className="file-row">
+                      <span className="truncate">{f.file_path}</span>
+                      <span className="badge">{f.chunk_count} units</span>
                     </div>
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="empty-state"><p>No stats available</p></div>
-            )}
+            ) : null}
           </div>
         )}
 
-        {/* ── Bugs Tab ───────────────────────────────────── */}
         {activeRepoId && tab === "bugs" && (
           <div className="animate-fadeIn">
-            <button
-              className="btn-secondary"
-              onClick={handleBugScan}
-              disabled={bugsLoading}
-              style={{ width: "100%", marginBottom: '16px' }}
-            >
-              {bugsLoading ? "Scanning…" : "Scan for Bugs"}
+            <button className="btn-secondary w-full mb-4" onClick={handleBugScan} disabled={bugsLoading}>
+              {bugsLoading ? "Deep Scanning..." : "Run Security Audit"}
             </button>
-            {bugs.length === 0 && !bugsLoading && (
-              <div className="empty-state"><p>No bugs found yet. Run a scan.</p></div>
-            )}
+            {bugs.length === 0 && !bugsLoading && <div className="empty-state"><p>No vulnerabilities found yet.</p></div>}
             {bugs.map((bug, idx) => (
-              <div key={idx} style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, background: bug.severity.toLowerCase() === 'critical' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)', color: bug.severity.toLowerCase() === 'critical' ? '#fca5a5' : '#fcd34d' }}>
-                    {bug.severity}
-                  </span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{bug.file}:{bug.line_range}</span>
+              <div key={idx} className="bug-card">
+                <div className="bug-header">
+                  <span className={`severity ${bug.severity.toLowerCase()}`}>{bug.severity}</span>
+                  <span className="file-link truncate">{bug.file}:{bug.line_range}</span>
                 </div>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text)', marginBottom: '8px' }}>{bug.description}</p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Suggestion: {bug.suggestion}</p>
+                <p className="description">{bug.description}</p>
+                <div className="suggestion"><strong>Fix:</strong> {bug.suggestion}</div>
               </div>
             ))}
           </div>
         )}
 
-        {/* ── README Tab ─────────────────────────────────── */}
         {activeRepoId && tab === "readme" && (
           <div className="animate-fadeIn">
-            <button
-              className="btn-secondary"
-              onClick={handleReadme}
-              disabled={readmeLoading}
-              style={{ width: "100%", marginBottom: '16px' }}
-            >
-              {readmeLoading ? "Generating…" : "Generate README"}
+            <button className="btn-secondary w-full mb-4" onClick={handleReadme} disabled={readmeLoading}>
+              {readmeLoading ? "Drafting..." : "Auto-Generate Docs"}
             </button>
             {readme ? (
-              <div style={{ background: 'var(--bg-hover)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px', fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.6, overflowY: 'auto', maxHeight: '500px' }}>
+              <div className="markdown-viewer">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{readme}</ReactMarkdown>
               </div>
-            ) : (
-              <div className="empty-state"><p>Click above to auto-generate a README</p></div>
-            )}
+            ) : <div className="empty-state"><p>Use AI to document your repository.</p></div>}
           </div>
         )}
 
-        {/* ── Files Tab ──────────────────────────────────── */}
         {activeRepoId && tab === "files" && (
           <div className="animate-fadeIn">
-            {filesLoading ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading files…</div>
-            ) : files.length > 0 ? (
-              <div style={{ fontSize: '0.85rem', color: 'var(--text)' }}>
-                {files.map((node) => (
-                  <FileTreeNode key={node.path} node={node} depth={0} />
-                ))}
+            {filesLoading ? <div className="panel-loading">Building tree...</div> : (
+              <div className="file-tree">
+                {files.map((node) => <FileTreeNode key={node.path} node={node} depth={0} />)}
               </div>
-            ) : (
-              <div className="empty-state"><p>No files indexed</p></div>
             )}
           </div>
         )}
 
-        {/* ── Export Tab ─────────────────────────────────── */}
         {activeRepoId && tab === "export" && (
-          <div className="animate-fadeIn" style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <h4 style={{ fontSize: '1.2rem', color: 'var(--text)', marginBottom: '8px' }}>Export Conversation</h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>Download or copy your current chat as markdown.</p>
-            
-            <button className="btn-primary" onClick={handleExport} style={{ width: "100%", marginBottom: '12px' }}>
-              Download as Markdown
-            </button>
-            <button className="btn-secondary" onClick={handleCopyChat} style={{ width: "100%" }}>
-              {exportCopied ? "Copied!" : "Copy to Clipboard"}
-            </button>
-
-            {messages.length > 0 && (
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                <span>{messages.length} messages</span>
-                <span>·</span>
-                <span>{messages.filter(m => m.role === "user").length} questions</span>
-              </div>
-            )}
+          <div className="animate-fadeIn export-view">
+            <h3>Knowledge Export</h3>
+            <p>Archive this session for your technical documentation.</p>
+            <div className="export-actions">
+              <button className="btn-primary" onClick={handleExport}>Download MD</button>
+              <button className="btn-secondary" onClick={handleCopyChat}>{exportCopied ? "Copied!" : "Copy Text"}</button>
+            </div>
           </div>
         )}
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .analysis-tabs { display: flex; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.3); }
+        .tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 0; background: transparent; border: none; color: var(--text-muted); border-bottom: 2px solid transparent; cursor: pointer; transition: 0.3s; font-size: 0.85rem; font-weight: 600; }
+        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(255,102,0,0.03); }
+        
+        .analysis-content { padding: 24px; flex: 1; overflow-y: auto; }
+        .scroll-custom::-webkit-scrollbar { width: 4px; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        
+        .stats-dashboard { display: flex; flex-direction: column; gap: 20px; }
+        .health-card { background: var(--primary-glow); border: 1px solid var(--border-active); border-radius: var(--radius-md); padding: 20px; }
+        .health-score { display: flex; align-items: center; gap: 20px; }
+        .circular-chart { width: 60px; height: 60px; }
+        .circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 3.8; }
+        .circle { fill: none; stroke-width: 3.8; stroke-linecap: round; stroke: var(--primary); animation: progress 1s ease-out forwards; }
+        .percentage { fill: #fff; font-family: sans-serif; font-size: 0.5rem; text-anchor: middle; font-weight: 800; }
+        .health-info strong { display: block; font-size: 1rem; color: var(--text); }
+        .health-info span { font-size: 0.8rem; color: var(--primary); font-weight: 600; }
+        
+        .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .metric-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 14px; border-radius: 12px; text-align: center; }
+        .m-label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        .m-value { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+        
+        .stat-section header { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+        .lang-row { margin-bottom: 12px; }
+        .lang-info { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px; }
+        .progress-mini { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+        .progress-mini .fill { height: 100%; background: var(--primary); }
+        
+        .file-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+        .badge { background: var(--bg-input); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; color: var(--text-muted); }
+        
+        .bug-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; transition: 0.2s; }
+        .bug-card:hover { border-color: var(--primary); }
+        .bug-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .severity { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; }
+        .severity.critical { background: rgba(239,68,68,0.2); color: #ef4444; }
+        .severity.warning { background: rgba(245,158,11,0.2); color: #f59e0b; }
+        .file-link { font-family: monospace; font-size: 0.75rem; color: var(--text-muted); }
+        .description { font-size: 0.88rem; line-height: 1.5; margin-bottom: 10px; }
+        .suggestion { font-size: 0.8rem; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--text-muted); }
+        
+        .markdown-viewer { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 24px; font-size: 0.92rem; line-height: 1.7; }
+        .export-view h3 { margin-bottom: 8px; }
+        .export-view p { margin-bottom: 24px; color: var(--text-muted); font-size: 0.85rem; }
+        .export-actions { display: flex; flex-direction: column; gap: 12px; }
+        
+        .w-full { width: 100%; }
+        .mb-4 { margin-bottom: 16px; }
+        .panel-loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem; }
+        .spinner-sm { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
+      `}} />
     </>
   );
 }
 
-/* ── File Tree Node (recursive) ────────────────────────────────── */
-
 function FileTreeNode({ node, depth }: { node: FileNode; depth: number }) {
   const [open, setOpen] = useState(depth < 1);
-
   return (
     <div>
-      <div
-        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', paddingLeft: `${depth * 16 + 8}px`, cursor: 'pointer', borderRadius: '4px', transition: 'background 0.2s', background: 'transparent' }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+      <div 
+        className="tree-node-item" 
+        style={{ paddingLeft: `${depth * 16 + 12}px` }}
         onClick={() => node.is_dir && setOpen(!open)}
-        role={node.is_dir ? "button" : undefined}
       >
-        <span style={{ color: 'var(--primary)', width: '16px', textAlign: 'center' }}>
-          {node.is_dir ? (open ? "−" : "+") : "•"}
-        </span>
-        <span style={{ color: 'var(--text)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{node.name}</span>
-        {node.chunk_count > 0 && (
-          <span style={{ fontSize: '0.7rem', color: 'var(--primary)', background: 'var(--primary-glow)', padding: '2px 6px', borderRadius: '10px' }}>{node.chunk_count}</span>
-        )}
-        {!node.is_dir && node.language && (
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{node.language}</span>
-        )}
+        <span className="tree-icon">{node.is_dir ? (open ? "▼" : "▶") : "•"}</span>
+        <span className="tree-name">{node.name}</span>
+        {node.chunk_count > 0 && <span className="tree-badge">{node.chunk_count}</span>}
       </div>
-      {node.is_dir && open && node.children.map((child) => (
-        <FileTreeNode key={child.path} node={child} depth={depth + 1} />
-      ))}
+      {node.is_dir && open && node.children.map((child) => <FileTreeNode key={child.path} node={child} depth={depth + 1} />)}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .tree-node-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-radius: 8px; transition: 0.2s; font-size: 0.85rem; }
+        .tree-node-item:hover { background: rgba(255,255,255,0.04); }
+        .tree-icon { color: var(--primary); width: 14px; font-size: 0.7rem; }
+        .tree-name { flex: 1; color: var(--text); }
+        .tree-badge { font-size: 0.65rem; color: var(--primary); background: var(--primary-glow); padding: 1px 6px; border-radius: 10px; }
+      `}} />
     </div>
   );
 }

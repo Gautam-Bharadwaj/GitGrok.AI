@@ -8,12 +8,21 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import type { UIMessage } from "@/store/chatStore";
 import SourceReferences from "./SourceReferences";
 
-const FOLLOW_UPS: Record<string, string[]> = {
-  default: [
-    "Explain the overall architecture",
-    "Find potential security issues",
-    "Generate a README for this repo",
-  ],
+const getSmartSuggestions = (content: string): string[] => {
+  const c = content.toLowerCase();
+  const suggestions: string[] = [];
+  
+  if (c.includes("bug") || c.includes("issue") || c.includes("critical")) {
+    suggestions.push("How do I fix this bug?", "Are there other security issues?", "Explain the root cause");
+  } else if (c.includes("architecture") || c.includes("middleware") || c.includes("routing")) {
+    suggestions.push("Show me the entry point", "Explain the data flow", "How do I add new routes?");
+  } else if (c.includes("install") || c.includes("setup") || c.includes("npm")) {
+    suggestions.push("Run a health check", "Show dev dependencies", "Generate a startup script");
+  } else {
+    suggestions.push("Explain this in detail", "Find related files", "Summarize this repo");
+  }
+  
+  return suggestions.slice(0, 3);
 };
 
 interface Props {
@@ -27,8 +36,8 @@ export default function MessageBubble({ message, onFollowUp, isLast }: Props) {
   const isStreaming = message.isStreaming;
 
   const followUps = useMemo(
-    () => (!isUser && isLast && !isStreaming ? FOLLOW_UPS.default : []),
-    [isUser, isLast, isStreaming]
+    () => (!isUser && isLast && !isStreaming ? getSmartSuggestions(message.content) : []),
+    [isUser, isLast, isStreaming, message.content]
   );
 
   if (isUser) {
