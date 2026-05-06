@@ -183,7 +183,18 @@ export const chatApi = {
       let aborted = false;
       setTimeout(() => {
         if (aborted) return;
-        const fakeAnswer = "Express is a fast, unopinionated, minimalist web framework for Node.js. Since you are in Demo Mode, this is a simulated instant response to showcase the UI experience without running a backend LLM.";
+        
+        let fakeAnswer = "Express is a fast, unopinionated, minimalist web framework for Node.js. Since you are in Demo Mode, this is a simulated response to showcase the UI.";
+        const q = question.toLowerCase();
+        
+        if (q.includes("bug") || q.includes("security") || q.includes("issue")) {
+          fakeAnswer = "Based on a scan of the repository, I found 2 potential issues: \n\n1. **Critical**: Possible middleware bypass in `lib/router/index.js` (L112).\n2. **Warning**: Performance degradation in `lib/application.js` due to deprecated prototype methods.\n\nWould you like me to explain the fix for the critical issue?";
+        } else if (q.includes("architecture") || q.includes("how it works")) {
+          fakeAnswer = "The Express architecture follows a **middleware-based** pattern. The core logic resides in `lib/application.js`, which manages the settings and the routing system. Requests flow through a stack of functions (the 'pipeline') until a response is sent. The `Router` (in `lib/router/index.js`) handles the complex matching of URLs to specific handlers.";
+        } else if (q.includes("readme") || q.includes("install")) {
+          fakeAnswer = "# Express.js\n\nTo install the dependencies and start the demo server, run:\n\n```bash\n$ npm install\n$ npm start\n```\n\nYou can then access the application at `http://localhost:3000`.";
+        }
+
         const words = fakeAnswer.split(" ");
         let i = 0;
         const interval = setInterval(() => {
